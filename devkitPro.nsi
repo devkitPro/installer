@@ -40,6 +40,7 @@ Page custom ChooseMirrorPage
 ; Directory page
 !define MUI_PAGE_HEADER_SUBTEXT "Choose the folder in which to install devkitPro."
 !define MUI_DIRECTORYPAGE_TEXT_TOP "${PRODUCT_NAME} will install devkitPro components in the following directory. To install in a different folder click Browse and select another folder. Click Next to continue."
+!define MUI_PAGE_CUSTOMFUNCTION_PRE AbortPage
 !insertmacro MUI_PAGE_DIRECTORY
 
 ; Start menu page
@@ -49,6 +50,7 @@ var ICONS_GROUP
 !define MUI_STARTMENUPAGE_REGISTRY_ROOT "${PRODUCT_UNINST_ROOT_KEY}"
 !define MUI_STARTMENUPAGE_REGISTRY_KEY "${PRODUCT_UNINST_KEY}"
 !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "${PRODUCT_STARTMENU_REGVAL}"
+!define MUI_PAGE_CUSTOMFUNCTION_PRE AbortPage
 !insertmacro MUI_PAGE_STARTMENU Application $ICONS_GROUP
 
 ; Instfiles page
@@ -152,7 +154,6 @@ Section -installComponents
   Call DownloadIfNeeded
 
   push ${SecdevkitPSP}
-
   push $DEVKITPSP
   push $MirrorURL/devkitpro
   Call DownloadIfNeeded
@@ -190,33 +191,24 @@ install_Msys:
   ExecWait '"$EXEDIR\$MSYS" -y -o$INSTDIR'
 
 SkipMsys:
-  SectionGetFlags ${SecdkARM} $R0
-  IntCmp $R0 ${SF_SELECTED} +1 SkipDevkitARM SkipDevkitARM
+  push ${SecdkARM}
+  push "DEVKITARM"
+  push $DEVKITARM
+  push "$BASEDIR/devkitARM"
+  call ExtractToolChain
 
-  ExecWait '"$EXEDIR\$DEVKITARM" -y -o$INSTDIR'
+  push ${SecdevkitPPC}
+  push "DEVKITPPC"
+  push $DEVKITPPC
+  push "$BASEDIR/devkitPPC"
+  call ExtractToolChain
 
-  WriteRegStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "DEVKITARM" "$BASEDIR/devkitARM"
-  SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
+  push ${SecdevkitPSP}
+  push "DEVKITPSP"
+  push $DEVKITPSP
+  push "$BASEDIR/devkitPSP"
+  call ExtractToolChain
 
-SkipDevkitARM:
-  SectionGetFlags ${SecdevkitPPC} $R0
-  IntCmp $R0 ${SF_SELECTED} +1 SkipDevkitPPC SkipDevkitPPC
-
-  ExecWait '"$EXEDIR\$DEVKITPPC" -y -o$INSTDIR'
-
-  WriteRegStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "DEVKITPPC" "$BASEDIR/devkitPPC"
-  SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
-
-SkipDevkitPPC:
-  SectionGetFlags ${SecdevkitPSP} $R0
-  IntCmp $R0 ${SF_SELECTED} +1 SkipDevkitPSP SkipDevkitPSP
-
-  ExecWait '"$EXEDIR\$DEVKITPPC" -y -o$INSTDIR'
-
-  WriteRegStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "DEVKITPSP" "$BASEDIR/devkitPSP"
-  SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
-
-SkipDevkitPSP:
   push ${Seclibgba}
   push "libgba"
   push $LIBGBA
@@ -232,8 +224,7 @@ SkipDevkitPSP:
   push $LIBMIRKO
   call ExtractLib
 
-  SectionGetFlags ${Secinsight} $R0
-  IntCmp $R0 ${SF_SELECTED} +1 SkipInsight SkipInsight
+  !insertmacro SectionFlagIsSet ${Secinsight} ${SF_SELECTED} +1 SkipInsight
 
   ExecWait '"$EXEDIR/$INSIGHT" -y -o$INSTDIR'
 
@@ -251,7 +242,7 @@ SkipPnotepad:
   SetOutPath $INSTDIR
   WriteIniStr "$INSTDIR\devkitPro.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
   CreateDirectory "$SMPROGRAMS\$ICONS_GROUP"
-  CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Website.lnk" "$INSTDIR\devkitPro.url"
+  CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\devkitpro.lnk" "$INSTDIR\devkitPro.url"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Uninstall.lnk" "$INSTDIR\uninst.exe"
   SetOutPath $INSTDIR\msys\bin
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\MSys.lnk" "$INSTDIR\msys\msys.bat" "-norxvt" "$INSTDIR\msys\m.ico"
@@ -267,6 +258,8 @@ SkipPnotepad:
   SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 
   ReadRegStr $1 HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "PATH"
+  ; remove it to avoid multiple paths with separate installs
+  ${StrRep} $1 $1 "$INSTDIR\msys\bin;" ""
   StrCpy $1 $INSTDIR\msys\bin;$1
   WriteRegExpandStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "PATH" $1
   SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
@@ -309,8 +302,7 @@ SectionEnd
 Function .onInit
 ;-----------------------------------------------------------------------------------------------------------------------
   ifFileExists $EXEDIR\$R1 skipextract
- ; extract built in ini file
-  ;!insertmacro MUI_INSTALLOPTIONS_EXTRACT_AS "INIfiles\devkitProUpdate.ini" "devkitProUpdate.ini"
+  ; extract built in ini file
   File /oname=$EXEDIR\devkitProUpdate.ini INIfiles\devkitProUpdate.ini
 
 skipextract:
@@ -417,6 +409,15 @@ Function UpgradedevkitProUpdate
 FunctionEnd
 
 ;-----------------------------------------------------------------------------------------------------------------------
+Function AbortPage
+;-----------------------------------------------------------------------------------------------------------------------
+
+  IntCmp $Install 1 ShowPage +1 +1
+    Abort
+ShowPage:
+FunctionEnd
+
+;-----------------------------------------------------------------------------------------------------------------------
 Function DownloadIfNeeded
 ;-----------------------------------------------------------------------------------------------------------------------
   pop $R0  ; URL
@@ -440,10 +441,31 @@ FunctionEnd
 var LIB
 var FOLDER
 
+
+;-----------------------------------------------------------------------------------------------------------------------
+Function ExtractToolChain
+;-----------------------------------------------------------------------------------------------------------------------
+  pop $R3  ; path
+  pop $R2  ; 7zip sfx
+  pop $R1  ; env variable
+  pop $R0  ; section flags
+
+  SectionGetFlags $R0 $0
+  IntOp $0 $0 & ${SF_SELECTED}
+  IntCmp $0 ${SF_SELECTED} +1 SkipExtract
+
+  nsExec::ExecToLog '"$EXEDIR\$R2" -y -o$INSTDIR'
+
+  WriteRegStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" $R1 $R3
+  SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
+
+SkipExtract:
+
+FunctionEnd
+
 ;-----------------------------------------------------------------------------------------------------------------------
 Function ExtractLib
 ;-----------------------------------------------------------------------------------------------------------------------
-
   pop $LIB
   pop $FOLDER
   pop $R0  ; section flags
@@ -452,7 +474,6 @@ Function ExtractLib
   IntOp $0 $0 & ${SF_SELECTED}
   IntCmp $0 ${SF_SELECTED} +1 SkipExtract
 
-  ;ExecWait '"$INSTDIR\msys\bin\bzip2" -k -d $LIB'
   nsExec::ExecToLog '"$INSTDIR\msys\bin\bzip2" -k -d $LIB'
   pop $0 # return value/error/timeout
   CreateDirectory "$INSTDIR\$FOLDER"
@@ -463,7 +484,7 @@ Function ExtractLib
 
   Rename $R1 $INSTDIR\$FOLDER\$R1
   SetOutPath $INSTDIR\$FOLDER
-  ExecWait '"$INSTDIR\msys\bin\tar" -xvf $R1'
+  nsExec::ExecToLog '"$INSTDIR\msys\bin\tar" -xvf $R1'
   Delete $INSTDIR\$R1
 
   SetOutPath $EXEDIR
