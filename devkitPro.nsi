@@ -53,13 +53,20 @@ var ICONS_GROUP
 !define MUI_PAGE_CUSTOMFUNCTION_PRE AbortPage
 !insertmacro MUI_PAGE_STARTMENU Application $ICONS_GROUP
 
+var INSTALL_ACTION
 ; Instfiles page
-!define MUI_PAGE_HEADER_SUBTEXT "Please wait while ${PRODUCT_NAME} downloads and installs the components you selected."
+!define MUI_PAGE_HEADER_SUBTEXT $INSTALL_ACTION 
 !define MUI_INSTFILESPAGE_ABORTHEADER_TEXT "Installation Aborted"
 !define MUI_INSTFILESPAGE_ABORTHEADER_SUBTEXT "The installation was not completed successfully."
 !insertmacro MUI_PAGE_INSTFILES
 
+var FINISH_TITLE
+var FINISH_TEXT
+
 ; Finish page
+!define MUI_FINISHPAGE_TITLE $FINISH_TITLE
+!define MUI_FINISHPAGE_TEXT $FINISH_TEXT
+!define MUI_FINISHPAGE_TEXT_LARGE $INSTALLED_TEXT
 !insertmacro MUI_PAGE_FINISH
 
 ; Uninstaller pages
@@ -85,14 +92,26 @@ var MirrorHost
 var MirrorURL
 var Install
 var MSYS
+var MSYS_VER
 var DEVKITARM
+var DEVKITARM_VER
 var DEVKITPPC
+var DEVKITPPC_VER
 var DEVKITPSP
+var DEVKITPSP_VER
 var LIBGBA
+var LIBGBA_VER
 var LIBNDS
+var LIBNDS_VER
 var LIBMIRKO
+var LIBMIRKO_VER
 var PNOTEPAD
+var PNOTEPAD_VER
 var INSIGHT
+var INSIGHT_VER
+
+
+var BASEDIR
 
 Section "msys 1.0.10" SecMsys
   SectionIn RO
@@ -104,12 +123,15 @@ SectionGroup devkitARM SecdevkitARM
 	SectionEnd
 
 	Section "libgba" Seclibgba
+          WriteINIStr $INSTDIR\installed.ini libgba Version $LIBGBA_VER
 	SectionEnd
 
 	Section "libmirko" Seclibmirko
+          WriteINIStr $INSTDIR\installed.ini libmirko Version $LIBMIRKO_VER
 	SectionEnd
 
 	Section "libnds" Seclibnds
+          WriteINIStr $INSTDIR\installed.ini libnds Version $LIBNDS_VER
 	SectionEnd
 
 SectionGroupEnd
@@ -126,7 +148,6 @@ SectionEnd
 Section "Insight" Secinsight
 SectionEnd
 
-var BASEDIR
 Section -installComponents
 
   StrCpy $R0 $INSTDIR 1
@@ -185,48 +206,65 @@ Section -installComponents
 
   IntCmp $Install 1 +1 SkipInstall SkipInstall
 
+  CreateDirectory $INSTDIR
+  File /oname=$INSTDIR\installed.ini INIfiles\installed.ini
+
   !insertmacro SectionFlagIsSet ${SecMsys} ${SF_SELECTED} install_Msys SkipMsys
 
 install_Msys:
   ExecWait '"$EXEDIR\$MSYS" -y -o$INSTDIR'
+  WriteINIStr $INSTDIR\installed.ini msys Version $MSYS_VER
 
 SkipMsys:
   push ${SecdkARM}
   push "DEVKITARM"
   push $DEVKITARM
   push "$BASEDIR/devkitARM"
+  push "devkitARM"
+  push $DEVKITARM_VER
   call ExtractToolChain
 
   push ${SecdevkitPPC}
   push "DEVKITPPC"
   push $DEVKITPPC
   push "$BASEDIR/devkitPPC"
+  push "devkitPPC"
+  push $DEVKITPPC_VER
   call ExtractToolChain
 
   push ${SecdevkitPSP}
   push "DEVKITPSP"
   push $DEVKITPSP
   push "$BASEDIR/devkitPSP"
+  push "devkitPSP"
+  push $DEVKITPSP_VER
   call ExtractToolChain
 
   push ${Seclibgba}
   push "libgba"
   push $LIBGBA
+  push "libgba"
+  push $LIBGBA_VER
   call ExtractLib
   
   push ${Seclibnds}
   push "libnds"
   push $LIBNDS
+  push "libnds"
+  push $LIBNDS_VER
   call ExtractLib
 
   push ${Seclibmirko}
   push "libmirko"
   push $LIBMIRKO
+  push "libmirko"
+  push $LIBMIRKO_VER
   call ExtractLib
 
   !insertmacro SectionFlagIsSet ${Secinsight} ${SF_SELECTED} +1 SkipInsight
 
   ExecWait '"$EXEDIR/$INSIGHT" -y -o$INSTDIR'
+  WriteINIStr $INSTDIR\installed.ini insight Version $INSIGHT_VER
 
 SkipInsight:
   SectionGetFlags ${Pnotepad} $R0
@@ -234,6 +272,7 @@ SkipInsight:
   IntCmp $R0 ${SF_SELECTED} +1 SkipPnotepad
 
   ZipDLL::extractall $EXEDIR/$PNOTEPAD "$INSTDIR/Programmers Notepad"
+  WriteINIStr $INSTDIR\installed.ini pnotepad Version $PNOTEPAD_VER
 
 SkipPnotepad:
 
@@ -331,30 +370,39 @@ gotINI:
 
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "msys" "Size"
   ReadINIStr $MSYS "$EXEDIR\devkitProUpdate.ini" "msys" "File"
+  ReadINIStr $MSYS_VER "$EXEDIR\devkitProUpdate.ini" "msys" "Version"
   SectionSetSize ${SecMsys} $R0
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitARM" "Size"
   ReadINIStr $DEVKITARM "$EXEDIR\devkitProUpdate.ini" "devkitARM" "File"
+  ReadINIStr $DEVKITARM_VER "$EXEDIR\devkitProUpdate.ini" "devkitARM" "Version"
   SectionSetSize ${SecdkARM} $R0
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitPPC" "Size"
   ReadINIStr $DEVKITPPC "$EXEDIR\devkitProUpdate.ini" "devkitPPC" "File"
+  ReadINIStr $DEVKITPPC_VER "$EXEDIR\devkitProUpdate.ini" "devkitPPC" "Version"
   SectionSetSize ${SecdevkitPPC} $R0
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitPSP" "Size"
   ReadINIStr $DEVKITPSP "$EXEDIR\devkitProUpdate.ini" "devkitPSP" "File"
+  ReadINIStr $DEVKITPSP_VER "$EXEDIR\devkitProUpdate.ini" "devkitPSP" "Version"
   SectionSetSize ${SecdevkitPSP} $R0
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libgba" "Size"
   ReadINIStr $LIBGBA "$EXEDIR\devkitProUpdate.ini" "libgba" "File"
+  ReadINIStr $LIBGBA_VER "$EXEDIR\devkitProUpdate.ini" "libgba" "Version"
   SectionSetSize ${Seclibgba} $R0
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libnds" "Size"
   ReadINIStr $LIBNDS "$EXEDIR\devkitProUpdate.ini" "libnds" "File"
+  ReadINIStr $LIBNDS_VER "$EXEDIR\devkitProUpdate.ini" "libnds" "Version"
   SectionSetSize ${Seclibnds} $R0
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libmirko" "Size"
   ReadINIStr $LIBMIRKO "$EXEDIR\devkitProUpdate.ini" "libmirko" "File"
+  ReadINIStr $LIBMIRKO_VER "$EXEDIR\devkitProUpdate.ini" "libmirko" "Version"
   SectionSetSize ${Seclibmirko} $R0
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "pnotepad" "Size"
   ReadINIStr $PNOTEPAD "$EXEDIR\devkitProUpdate.ini" "pnotepad" "File"
+  ReadINIStr $PNOTEPAD_VER "$EXEDIR\devkitProUpdate.ini" "pnotepad" "Version"
   SectionSetSize ${Pnotepad} $R0
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "insight" "Size"
   ReadINIStr $INSIGHT "$EXEDIR\devkitProUpdate.ini" "insight" "File"
+  ReadINIStr $INSIGHT_VER "$EXEDIR\devkitProUpdate.ini" "insight" "Version"
   SectionSetSize ${Secinsight} $R0
 
   !insertmacro MUI_INSTALLOPTIONS_EXTRACT_AS "Dialogs\PickMirror.ini" "PickMirror.ini"
@@ -445,6 +493,8 @@ var FOLDER
 ;-----------------------------------------------------------------------------------------------------------------------
 Function ExtractToolChain
 ;-----------------------------------------------------------------------------------------------------------------------
+  pop $R5  ; version
+  pop $R4  ; section name
   pop $R3  ; path
   pop $R2  ; 7zip sfx
   pop $R1  ; env variable
@@ -459,6 +509,8 @@ Function ExtractToolChain
   WriteRegStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" $R1 $R3
   SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 
+  WriteINIStr $INSTDIR\installed.ini $R4 Version $R5
+
 SkipExtract:
 
 FunctionEnd
@@ -466,6 +518,8 @@ FunctionEnd
 ;-----------------------------------------------------------------------------------------------------------------------
 Function ExtractLib
 ;-----------------------------------------------------------------------------------------------------------------------
+  pop $R3  ; vesrion
+  pop $R2  ; section name
   pop $LIB
   pop $FOLDER
   pop $R0  ; section flags
@@ -488,6 +542,8 @@ Function ExtractLib
   Delete $INSTDIR\$R1
 
   SetOutPath $EXEDIR
+
+  WriteINIStr $INSTDIR\installed.ini $R2 Version $R3
 
 SkipExtract:
 
@@ -512,4 +568,20 @@ Function ChooseMirrorPage
   
   ${StrTok} $MirrorHost ${hosts} "|" $0 0
   StrCpy $MirrorURL "http://$MirrorHost.dl.sourceforge.net/sourceforge"
+
+  IntCmp $Install 1 install +1 +1
+
+  StrCpy $INSTALL_ACTION "Please wait while ${PRODUCT_NAME} downloads the components you selected."
+  StrCpy $FINISH_TITLE "Download complete."
+  StrCpy $FINISH_TEXT "${PRODUCT_NAME} has finished downloading the components you selected. To install the package please run the installer again and select the download and install option."
+
+  Goto done
+  
+install:
+  StrCpy $INSTALL_ACTION "Please wait while ${PRODUCT_NAME} downloads and installs the components you selected."
+  StrCpy $FINISH_TITLE "Installation complete."
+  StrCpy $FINISH_TEXT "${PRODUCT_NAME} has finished installing the components you selected."
+
+done:
+
 FunctionEnd
