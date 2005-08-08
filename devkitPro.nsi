@@ -31,7 +31,9 @@ ${UnStrRep}
 !define MUI_WELCOMEPAGE_TITLE "Welcome to ${PRODUCT_NAME}\r\nVersion ${PRODUCT_VERSION}"
 !define MUI_WELCOMEPAGE_TEXT "${PRODUCT_NAME} automates the process of downloading, installing, and uninstalling devkitPro Components.\r\n\nClick Next to continue."
 !insertmacro MUI_PAGE_WELCOME
+
 Page custom ChooseMirrorPage
+Page custom UpdateRemove
 
 ; Components page
 !define MUI_PAGE_HEADER_SUBTEXT "Choose the devkitPro components you would like to install."
@@ -123,15 +125,12 @@ SectionGroup devkitARM SecdevkitARM
 	SectionEnd
 
 	Section "libgba" Seclibgba
-          WriteINIStr $INSTDIR\installed.ini libgba Version $LIBGBA_VER
-	SectionEnd
+        SectionEnd
 
 	Section "libmirko" Seclibmirko
-          WriteINIStr $INSTDIR\installed.ini libmirko Version $LIBMIRKO_VER
 	SectionEnd
 
 	Section "libnds" Seclibnds
-          WriteINIStr $INSTDIR\installed.ini libnds Version $LIBNDS_VER
 	SectionEnd
 
 SectionGroupEnd
@@ -206,11 +205,13 @@ Section -installComponents
 
   IntCmp $Install 1 +1 SkipInstall SkipInstall
 
+  IntCmp $Updating 1 install+Msys +1 +1
+
   CreateDirectory $INSTDIR
   File /oname=$INSTDIR\installed.ini INIfiles\installed.ini
 
   !insertmacro SectionFlagIsSet ${SecMsys} ${SF_SELECTED} install_Msys SkipMsys
-
+  WriteINIStr $INSTDIR\installed.ini mirror url $MirrorURL
 install_Msys:
   ExecWait '"$EXEDIR\$MSYS" -y -o$INSTDIR'
   WriteINIStr $INSTDIR\installed.ini msys Version $MSYS_VER
@@ -289,6 +290,7 @@ SkipPnotepad:
   WriteUninstaller "$INSTDIR\uninst.exe"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninst.exe"
+  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "InstallLocation" "$INSTDIR"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
@@ -367,6 +369,20 @@ gotINI:
   upgradeMe:
     Call UpgradedevkitProUpdate
   Finish:
+
+  ReadRegStr $1 ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "InstallLocation"
+  StrCmp $1 "" installing
+  
+  StrCpy $INSTDIR $1
+  StrCpy $R1 "I'm updating"
+  goto continue
+  
+installing:
+  StrCpy $R1 "I'm installing"
+
+continue:
+
+  MessageBox MB_ICONINFORMATION|MB_OK "$R1"
 
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "msys" "Size"
   ReadINIStr $MSYS "$EXEDIR\devkitProUpdate.ini" "msys" "File"
@@ -547,6 +563,11 @@ Function ExtractLib
 
 SkipExtract:
 
+FunctionEnd
+
+;-----------------------------------------------------------------------------------------------------------------------
+Function UpdateRemove
+;-----------------------------------------------------------------------------------------------------------------------
 FunctionEnd
 
 ;-----------------------------------------------------------------------------------------------------------------------
