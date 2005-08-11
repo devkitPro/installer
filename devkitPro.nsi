@@ -1,5 +1,9 @@
-; $Id: devkitPro.nsi,v 1.6 2005-08-11 10:29:30 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.7 2005-08-11 12:04:24 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.6  2005/08/11 10:29:30  wntrmute
+; added pn2 to shortcuts
+; fixed new version download
+;
 ; Revision 1.5  2005/08/10 13:54:12  wntrmute
 ; *** empty log message ***
 ;
@@ -37,7 +41,7 @@ ${UnStrRep}
 !insertmacro MUI_PAGE_WELCOME
 
 Page custom ChooseMirrorPage
-Page custom UpdateRemove
+Page custom KeepFilesPage
 
 var ChooseMessage
 
@@ -229,6 +233,8 @@ install_Msys:
 
   ExecWait '"$EXEDIR\$MSYS" -y -o$INSTDIR'
   WriteINIStr $INSTDIR\installed.ini msys Version $MSYS_VER
+  push $MSYS
+  call RemoveFile
 
 SkipMsys:
   push ${SecdkARM}
@@ -282,6 +288,8 @@ SkipMsys:
 
   ExecWait '"$EXEDIR/$INSIGHT" -y -o$INSTDIR'
   WriteINIStr $INSTDIR\installed.ini insight Version $INSIGHT_VER
+  push $INSIGHT
+  call RemoveFile
 
 SkipInsight:
   SectionGetFlags ${Pnotepad} $R0
@@ -291,6 +299,8 @@ SkipInsight:
   RMDir /r "$INSTDIR/Programmers Notepad"
 
   ZipDLL::extractall $EXEDIR/$PNOTEPAD "$INSTDIR/Programmers Notepad"
+  push $PNOTEPAD
+  call RemoveFile
 
   WriteRegStr HKCR ".pnproj" "" "PN2.pnproj.1"
   WriteRegStr HKCR "PN2.pnproj.1\shell\open\command" "" '$INSTDIR\Programmers Notepad\pn.exe" "%1"'
@@ -300,26 +310,30 @@ SkipPnotepad:
 
   Strcpy $R1 "${PRODUCT_NAME}-${PRODUCT_VERSION}.exe"
 
+  Delete $INSTDIR\devkitProUpdater*.*
   StrCmp $EXEDIR $INSTDIR skip_copy
-  
+
   CopyFiles $EXEDIR\$R1 $INSTDIR\$R1
 skip_copy:
-  IntCmp $Updating 1 SkipInstall +1 +1
 
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
   SetShellVarContext all ; Put stuff in All Users
   SetOutPath $INSTDIR
+  IntCmp $Updating 1 SkipMenu
   WriteIniStr "$INSTDIR\devkitPro.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
   CreateDirectory "$SMPROGRAMS\$ICONS_GROUP"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\devkitpro.lnk" "$INSTDIR\devkitPro.url"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Uninstall.lnk" "$INSTDIR\uninst.exe"
-  CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Update.lnk" "$INSTDIR\$R1"
   SetOutPath $INSTDIR\msys\bin
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\MSys.lnk" "$INSTDIR\msys\msys.bat" "-norxvt" "$INSTDIR\msys\m.ico"
   SetOutPath "$INSTDIR\Programmers Notepad"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Programmers Notepad.lnk" "$INSTDIR\Programmers Notepad\pn.exe"
+SkipMenu:
+  SetOutPath $INSTDIR
+  CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Update.lnk" "$INSTDIR\$R1"
   !insertmacro MUI_STARTMENU_WRITE_END
   WriteUninstaller "$INSTDIR\uninst.exe"
+  IntCmp $Updating 1 SkipInstall
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninst.exe"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "InstallLocation" "$INSTDIR"
@@ -393,10 +407,10 @@ skipextract:
   Rename $EXEDIR\devkitProUpdate.ini.old $EXEDIR\devkitProUpdate.ini
 
 gotINI:
+  Delete $EXEDIR\devkitProUpdate.ini.old
+
   ; Read devkitProUpdate build info from INI file
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitProUpdate" "Build"
-
-  MessageBox MB_ICONINFORMATION|MB_OK "$R0 ${BUILD}"
 
   IntCmp ${BUILD} $R0 Finish newVersion Finish
 
@@ -459,6 +473,7 @@ installing:
   SectionSetSize ${Secinsight} $R0
 
   !insertmacro MUI_INSTALLOPTIONS_EXTRACT_AS "Dialogs\PickMirror.ini" "PickMirror.ini"
+  !insertmacro MUI_INSTALLOPTIONS_EXTRACT_AS "Dialogs\keepfiles.ini" "keepfiles.ini"
 
   IntCmp $Updating 1 +1 first_install
 
@@ -688,12 +703,15 @@ Function ExtractToolChain
 
   RMDir /r $INSTDIR\$R4
 
-  nsExec::ExecToLog '"$EXEDIR\$R2" -y -o$INSTDIR'
+  ExecWait '"$EXEDIR\$R2" -y -o$INSTDIR'
 
   WriteRegStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" $R1 $R3
   SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 
   WriteINIStr $INSTDIR\installed.ini $R4 Version $R5
+
+  push $R2
+  call RemoveFile
 
 SkipExtract:
 
@@ -731,16 +749,45 @@ Function ExtractLib
   SetOutPath $EXEDIR
 
   WriteINIStr $INSTDIR\installed.ini $R2 Version $R3
+  push $LIB
+  call RemoveFile
 
 SkipExtract:
 
 FunctionEnd
 
 ;-----------------------------------------------------------------------------------------------------------------------
-Function UpdateRemove
+;Function UpdateRemove
 ;-----------------------------------------------------------------------------------------------------------------------
+;FunctionEnd
+
+var keepfiles
+
+;-----------------------------------------------------------------------------------------------------------------------
+Function KeepFilesPage
+;-----------------------------------------------------------------------------------------------------------------------
+  StrCpy $keepfiles 0
+  IntCmp $Install 0 nodisplay
+  !insertmacro MUI_INSTALLOPTIONS_DISPLAY "keepfiles.ini"
+  ; Get the user entered values.
+  !insertmacro MUI_INSTALLOPTIONS_READ $keepfiles "keepfiles.ini" "Field 3" "State"
+nodisplay:
 FunctionEnd
 
+var filename
+
+;-----------------------------------------------------------------------------------------------------------------------
+Function RemoveFile
+;-----------------------------------------------------------------------------------------------------------------------
+  pop $filename
+  IntCmp $keepfiles 1 keepit
+
+  ;MessageBox MB_ICONINFORMATION|MB_OK $EXEDIR\$filename
+  Delete $EXEDIR\$filename
+
+keepit:
+
+FunctionEnd
 ;-----------------------------------------------------------------------------------------------------------------------
 ; faking an array using separators
 ;-----------------------------------------------------------------------------------------------------------------------
