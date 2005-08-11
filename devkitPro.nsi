@@ -1,15 +1,18 @@
-; $Id: devkitPro.nsi,v 1.5 2005-08-10 13:54:12 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.6 2005-08-11 10:29:30 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.5  2005/08/10 13:54:12  wntrmute
+; *** empty log message ***
+;
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.0.0"
+!define PRODUCT_VERSION "1.0.1"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "1"
+!define BUILD "2"
 
 SetCompressor lzma
 
@@ -290,7 +293,7 @@ SkipInsight:
   ZipDLL::extractall $EXEDIR/$PNOTEPAD "$INSTDIR/Programmers Notepad"
 
   WriteRegStr HKCR ".pnproj" "" "PN2.pnproj.1"
-  WriteRegStr HKCR "PN2.pnproj.1\shell\open\command" "" 'C:\devkitPro_test\Programmers Notepad\pn.exe" "%1"'
+  WriteRegStr HKCR "PN2.pnproj.1\shell\open\command" "" '$INSTDIR\Programmers Notepad\pn.exe" "%1"'
   WriteINIStr $INSTDIR\installed.ini pnotepad Version $PNOTEPAD_VER
 
 SkipPnotepad:
@@ -313,6 +316,8 @@ skip_copy:
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Update.lnk" "$INSTDIR\$R1"
   SetOutPath $INSTDIR\msys\bin
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\MSys.lnk" "$INSTDIR\msys\msys.bat" "-norxvt" "$INSTDIR\msys\m.ico"
+  SetOutPath "$INSTDIR\Programmers Notepad"
+  CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Programmers Notepad.lnk" "$INSTDIR\Programmers Notepad\pn.exe"
   !insertmacro MUI_STARTMENU_WRITE_END
   WriteUninstaller "$INSTDIR\uninst.exe"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
@@ -388,8 +393,11 @@ skipextract:
   Rename $EXEDIR\devkitProUpdate.ini.old $EXEDIR\devkitProUpdate.ini
 
 gotINI:
-  ; Read MozUpdate build info from INI file
+  ; Read devkitProUpdate build info from INI file
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitProUpdate" "Build"
+
+  MessageBox MB_ICONINFORMATION|MB_OK "$R0 ${BUILD}"
+
   IntCmp ${BUILD} $R0 Finish newVersion Finish
 
   newVersion:
@@ -592,7 +600,8 @@ Function UpgradedevkitProUpdate
   ReadINIStr $R1 "$EXEDIR\devkitProUpdate.ini" "devkitProUpdate" "Filename"
 
   DetailPrint "Downloading new version of devkitProUpdater..."
-  NSISdl::download $R0 "$EXEDIR\$R1"
+  NSISdl::download $R0/$R1 "$EXEDIR\$R1"
+  Pop $0
   StrCmp $0 success success
     ; Failure
     SetDetailsView show
@@ -613,6 +622,8 @@ FunctionEnd
 Function AbortComponents
 ;-----------------------------------------------------------------------------------------------------------------------
 
+  IntCmp $Updating 1 +1 ShowPage ShowPage
+
   IntCmp $Updates 0 +1 Showpage Showpage
   
   StrCpy $FINISH_TEXT "${PRODUCT_NAME} found no updates to install."
@@ -626,7 +637,7 @@ FunctionEnd
 Function AbortPage
 ;-----------------------------------------------------------------------------------------------------------------------
 
-  IntCmp $Updating 1 +1 TestInstall
+  IntCmp $Updating 1 +1 TestInstall TestInstall
     Abort
 
 TestInstall:
@@ -715,7 +726,7 @@ Function ExtractLib
   Rename $R1 $INSTDIR\$FOLDER\$R1
   SetOutPath $INSTDIR\$FOLDER
   nsExec::ExecToLog '"$INSTDIR\msys\bin\tar" -xvf $R1'
-  Delete $INSTDIR\$R1
+  Delete $INSTDIR\$FOLDER\$R1
 
   SetOutPath $EXEDIR
 
