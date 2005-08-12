@@ -1,5 +1,9 @@
-; $Id: devkitPro.nsi,v 1.9 2005-08-12 09:32:31 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.10 2005-08-12 10:43:35 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.9  2005/08/12 09:32:31  wntrmute
+; set up default pn2 tools
+; added nds examples
+;
 ; Revision 1.8  2005/08/12 01:03:17  wntrmute
 ; only insert pn2 shortcut when installed
 ; hide devkitARM group when nothing to update
@@ -328,11 +332,10 @@ SkipInsight:
   push $PNOTEPAD
   call RemoveFile
 
-  MessageBox MB_ICONINFORMATION|MB_OK "$APPDATA"
   File "/oname=$APPDATA\Echo Software\PN2\UserTools.xml" pn2\UserTools.xml
 
   WriteRegStr HKCR ".pnproj" "" "PN2.pnproj.1"
-  WriteRegStr HKCR "PN2.pnproj.1\shell\open\command" "" '$INSTDIR\Programmers Notepad\pn.exe" "%1"'
+  WriteRegStr HKCR "PN2.pnproj.1\shell\open\command" "" '"$INSTDIR\Programmers Notepad\pn.exe" "%1"'
   WriteINIStr $INSTDIR\installed.ini pnotepad Version $PNOTEPAD_VER
 
 SkipPnotepad:
