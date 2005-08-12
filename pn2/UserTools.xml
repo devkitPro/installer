@@ -1,0 +1,1 @@
+<schemetools><global><tool command="make" flags="45" folder="$(ProjectPath)" index="0" name="make" params="" parsepattern="" shortcut="1073"></tool><tool command="make" flags="45" folder="$(ProjectPath)" index="1" name="clean" params="clean" parsepattern="" shortcut="1074"></tool></global></schemetools>

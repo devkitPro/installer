@@ -1,5 +1,9 @@
-; $Id: devkitPro.nsi,v 1.8 2005-08-12 01:03:17 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.9 2005-08-12 09:32:31 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.8  2005/08/12 01:03:17  wntrmute
+; only insert pn2 shortcut when installed
+; hide devkitARM group when nothing to update
+;
 ; Revision 1.7  2005/08/11 12:04:24  wntrmute
 ; added option to delete downloads
 ; fixed shortcut update
@@ -15,13 +19,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.0.2"
+!define PRODUCT_VERSION "1.0.3"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "3"
+!define BUILD "4"
 
 SetCompressor lzma
 
@@ -122,6 +126,8 @@ var LIBGBA
 var LIBGBA_VER
 var LIBNDS
 var LIBNDS_VER
+var NDSEXAMPLES
+var NDSEXAMPLES_VER
 var LIBMIRKO
 var LIBMIRKO_VER
 var PNOTEPAD
@@ -149,6 +155,9 @@ SectionGroup devkitARM SecdevkitARM
 	SectionEnd
 
 	Section "libnds" Seclibnds
+	SectionEnd
+
+	Section "nds examples" ndsexamples
 	SectionEnd
 
 SectionGroupEnd
@@ -208,6 +217,11 @@ Section -installComponents
 
   push ${Seclibmirko}
   push $LIBMIRKO
+  push $MirrorURL/devkitpro
+  Call DownloadIfNeeded
+
+  push ${ndsexamples}
+  push $NDSEXAMPLES
   push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
@@ -287,6 +301,13 @@ SkipMsys:
   push $LIBMIRKO_VER
   call ExtractLib
 
+  push ${ndsexamples}
+  push "examples\nds"
+  push $NDSEXAMPLES
+  push "ndsexamples"
+  push $NDSEXAMPLES_VER
+  call ExtractLib
+
   !insertmacro SectionFlagIsSet ${Secinsight} ${SF_SELECTED} +1 SkipInsight
 
   RMDir /r "$INSTDIR/Insight"
@@ -306,6 +327,9 @@ SkipInsight:
   ZipDLL::extractall $EXEDIR/$PNOTEPAD "$INSTDIR/Programmers Notepad"
   push $PNOTEPAD
   call RemoveFile
+
+  MessageBox MB_ICONINFORMATION|MB_OK "$APPDATA"
+  File "/oname=$APPDATA\Echo Software\PN2\UserTools.xml" pn2\UserTools.xml
 
   WriteRegStr HKCR ".pnproj" "" "PN2.pnproj.1"
   WriteRegStr HKCR "PN2.pnproj.1\shell\open\command" "" '$INSTDIR\Programmers Notepad\pn.exe" "%1"'
@@ -390,6 +414,7 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibgba} "Nintendo GBA development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibmirko} "Gamepark GP32 development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibnds} "Nintendo DS development library"
+  !insertmacro MUI_DESCRIPTION_TEXT ${ndsexamples} "Nintendo DS example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${Secinsight} "GUI debugger"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
@@ -465,6 +490,12 @@ installing:
   ReadINIStr $LIBNDS "$EXEDIR\devkitProUpdate.ini" "libnds" "File"
   ReadINIStr $LIBNDS_VER "$EXEDIR\devkitProUpdate.ini" "libnds" "Version"
   SectionSetSize ${Seclibnds} $R0
+
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "ndsexamples" "Size"
+  ReadINIStr $NDSEXAMPLES "$EXEDIR\devkitProUpdate.ini" "ndsexamples" "File"
+  ReadINIStr $NDSEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "ndsexamples" "Version"
+  SectionSetSize ${ndsexamples} $R0
+
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libmirko" "Size"
   ReadINIStr $LIBMIRKO "$EXEDIR\devkitProUpdate.ini" "libmirko" "File"
   ReadINIStr $LIBMIRKO_VER "$EXEDIR\devkitProUpdate.ini" "libmirko" "Version"
@@ -515,6 +546,13 @@ installing:
   push $0
   push $LIBNDS_VER
   push ${Seclibnds}
+  call checkVersion
+
+  ReadINIStr $0 "$INSTDIR\installed.ini" "ndsexamples" "Version"
+
+  push $0
+  push $NDSEXAMPLES_VER
+  push ${ndsexamples}
   call checkVersion
 
   IntCmp $Updates 0 +1 dkARMupdates dkARMupdates
@@ -732,10 +770,10 @@ FunctionEnd
 ;-----------------------------------------------------------------------------------------------------------------------
 Function ExtractLib
 ;-----------------------------------------------------------------------------------------------------------------------
-  pop $R3  ; vesrion
+  pop $R3  ; version
   pop $R2  ; section name
-  pop $LIB
-  pop $FOLDER
+  pop $LIB ; filename
+  pop $FOLDER ; extract to
   pop $R0  ; section flags
 
   SectionGetFlags $R0 $0
