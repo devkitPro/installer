@@ -1,5 +1,10 @@
-; $Id: devkitPro.nsi,v 1.7 2005-08-11 12:04:24 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.8 2005-08-12 01:03:17 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.7  2005/08/11 12:04:24  wntrmute
+; added option to delete downloads
+; fixed shortcut update
+; delete old updaters
+;
 ; Revision 1.6  2005/08/11 10:29:30  wntrmute
 ; added pn2 to shortcuts
 ; fixed new version download
@@ -10,13 +15,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.0.1"
+!define PRODUCT_VERSION "1.0.2"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "2"
+!define BUILD "3"
 
 SetCompressor lzma
 
@@ -326,6 +331,7 @@ skip_copy:
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Uninstall.lnk" "$INSTDIR\uninst.exe"
   SetOutPath $INSTDIR\msys\bin
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\MSys.lnk" "$INSTDIR\msys\msys.bat" "-norxvt" "$INSTDIR\msys\m.ico"
+  !insertmacro SectionFlagIsSet ${Pnotepad} ${SF_SELECTED} +1 SkipMenu
   SetOutPath "$INSTDIR\Programmers Notepad"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Programmers Notepad.lnk" "$INSTDIR\Programmers Notepad\pn.exe"
 SkipMenu:
@@ -483,32 +489,11 @@ installing:
 
   !insertmacro SetSectionFlag SecdevkitARM SF_EXPAND
   
-  ReadINIStr $0 "$INSTDIR\installed.ini" "msys" "Version"
-
-  push $0
-  push $MSYS_VER
-  push ${SecMsys}
-  call checkVersion
-
   ReadINIStr $0 "$INSTDIR\installed.ini" "devkitARM" "Version"
 
   push $0
   push $DEVKITARM_VER
   push ${SecdkARM}
-  call checkVersion
-
-  ReadINIStr $0 "$INSTDIR\installed.ini" "devkitPPC" "Version"
-
-  push $0
-  push $DEVKITPPC_VER
-  push ${SecdevkitPPC}
-  call checkVersion
-
-  ReadINIStr $0 "$INSTDIR\installed.ini" "devkitPSP" "Version"
-
-  push $0
-  push $DEVKITPSP_VER
-  push ${SecdevkitPSP}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "libmirko" "Version"
@@ -531,6 +516,33 @@ installing:
   push $LIBNDS_VER
   push ${Seclibnds}
   call checkVersion
+
+  IntCmp $Updates 0 +1 dkARMupdates dkARMupdates
+
+  SectionSetText ${SecdevkitARM} ""
+
+dkARMupdates:
+  ReadINIStr $0 "$INSTDIR\installed.ini" "msys" "Version"
+
+  push $0
+  push $MSYS_VER
+  push ${SecMsys}
+  call checkVersion
+
+  ReadINIStr $0 "$INSTDIR\installed.ini" "devkitPPC" "Version"
+
+  push $0
+  push $DEVKITPPC_VER
+  push ${SecdevkitPPC}
+  call checkVersion
+
+  ReadINIStr $0 "$INSTDIR\installed.ini" "devkitPSP" "Version"
+
+  push $0
+  push $DEVKITPSP_VER
+  push ${SecdevkitPSP}
+  call checkVersion
+
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "pnotepad" "Version"
 
