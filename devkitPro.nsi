@@ -1,5 +1,8 @@
-; $Id: devkitPro.nsi,v 1.10 2005-08-12 10:43:35 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.11 2005-08-13 06:38:28 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.10  2005/08/12 10:43:35  wntrmute
+; fixed pn2 file association
+;
 ; Revision 1.9  2005/08/12 09:32:31  wntrmute
 ; set up default pn2 tools
 ; added nds examples
@@ -23,13 +26,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.0.3"
+!define PRODUCT_VERSION "1.0.4"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "4"
+!define BUILD "5"
 
 SetCompressor lzma
 
@@ -351,13 +354,14 @@ skip_copy:
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
   SetShellVarContext all ; Put stuff in All Users
   SetOutPath $INSTDIR
-  IntCmp $Updating 1 SkipMenu
+  IntCmp $Updating 1 CheckPN2
   WriteIniStr "$INSTDIR\devkitPro.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
   CreateDirectory "$SMPROGRAMS\$ICONS_GROUP"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\devkitpro.lnk" "$INSTDIR\devkitPro.url"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Uninstall.lnk" "$INSTDIR\uninst.exe"
   SetOutPath $INSTDIR\msys\bin
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\MSys.lnk" "$INSTDIR\msys\msys.bat" "-norxvt" "$INSTDIR\msys\m.ico"
+CheckPN2:
   !insertmacro SectionFlagIsSet ${Pnotepad} ${SF_SELECTED} +1 SkipMenu
   SetOutPath "$INSTDIR\Programmers Notepad"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Programmers Notepad.lnk" "$INSTDIR\Programmers Notepad\pn.exe"
@@ -402,6 +406,12 @@ Section Uninstall
   DeleteRegKey HKCR ".pnproj"
   DeleteRegKey HKCR "PN2.pnproj.1\shell\open\command"
   DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
+  
+  DeleteRegValue HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "DEVKITPPC"
+  DeleteRegValue HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "DEVKITPSP"
+  DeleteRegValue HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "DEVKITARM"
+  DeleteRegValue HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "DEVKITPRO"
+  SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 
   SetAutoClose true
 SectionEnd
@@ -821,6 +831,12 @@ Function KeepFilesPage
 ;-----------------------------------------------------------------------------------------------------------------------
   StrCpy $keepfiles 0
   IntCmp $Install 0 nodisplay
+
+  IntCmp $Updating 1 +1 defaultkeep
+
+  WriteINIStr $TEMP\keepfiles.ini "Field 3" "State" 0
+  WriteINIStr $TEMP\keepfiles.ini "Field 2" "State" 1
+defaultkeep:
   !insertmacro MUI_INSTALLOPTIONS_DISPLAY "keepfiles.ini"
   ; Get the user entered values.
   !insertmacro MUI_INSTALLOPTIONS_READ $keepfiles "keepfiles.ini" "Field 3" "State"
