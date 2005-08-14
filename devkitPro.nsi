@@ -1,5 +1,8 @@
-; $Id: devkitPro.nsi,v 1.12 2005-08-14 00:56:04 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.13 2005-08-14 02:05:34 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.12  2005/08/14 00:56:04  wntrmute
+; default updater to remove downloads
+;
 ; Revision 1.11  2005/08/13 06:38:28  wntrmute
 ; env vars removed on uninstall
 ;
@@ -543,7 +546,8 @@ installing:
   StrCpy $Updates 0
 
   !insertmacro SetSectionFlag SecdevkitARM SF_EXPAND
-  
+  !insertmacro SetSectionFlag SecdevkitARM SF_TOGGLED
+
   ReadINIStr $0 "$INSTDIR\installed.ini" "devkitARM" "Version"
 
   push $0
@@ -639,10 +643,14 @@ Function checkVersion
 
   IntOp $R1 ${SF_RO} ~
   IntOp $PackageFlags $PackageFlags & $R1
+  IntOp $PackageFlags $PackageFlags & ${SECTION_OFF}
 
   StrCmp $CurrentVer $InstalledVer noupdate
   
   Intop $Updates $Updates + 1
+  
+  ; don't select if not installed
+  StrCmp $InstalledVer 0 done
   
   IntOp $PackageFlags $PackageFlags | ${SF_SELECTED}
 
@@ -650,7 +658,6 @@ Function checkVersion
 
 noupdate:
 
-  IntOp $PackageFlags $PackageFlags & ${SECTION_OFF}
   SectionSetText $PackageSection ""
 
 done:
