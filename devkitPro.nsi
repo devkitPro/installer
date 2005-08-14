@@ -1,5 +1,8 @@
-; $Id: devkitPro.nsi,v 1.11 2005-08-13 06:38:28 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.12 2005-08-14 00:56:04 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.11  2005/08/13 06:38:28  wntrmute
+; env vars removed on uninstall
+;
 ; Revision 1.10  2005/08/12 10:43:35  wntrmute
 ; fixed pn2 file association
 ;
@@ -431,9 +434,12 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${Secinsight} "GUI debugger"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
+var INI
+
 ;-----------------------------------------------------------------------------------------------------------------------
 Function .onInit
 ;-----------------------------------------------------------------------------------------------------------------------
+  InitPluginsDir
   ifFileExists $EXEDIR\$R1 skipextract
   ; extract built in ini file
   File /oname=$EXEDIR\devkitProUpdate.ini INIfiles\devkitProUpdate.ini
@@ -523,7 +529,12 @@ installing:
   SectionSetSize ${Secinsight} $R0
 
   !insertmacro MUI_INSTALLOPTIONS_EXTRACT_AS "Dialogs\PickMirror.ini" "PickMirror.ini"
-  !insertmacro MUI_INSTALLOPTIONS_EXTRACT_AS "Dialogs\keepfiles.ini" "keepfiles.ini"
+
+
+  GetTempFileName $INI $PLUGINSDIR
+  File /oname=$INI "Dialogs\keepfiles.ini"
+
+  ;!insertmacro MUI_INSTALLOPTIONS_EXTRACT_AS "Dialogs\keepfiles.ini" "keepfiles.ini"
 
   IntCmp $Updating 1 +1 first_install
 
@@ -819,11 +830,6 @@ SkipExtract:
 
 FunctionEnd
 
-;-----------------------------------------------------------------------------------------------------------------------
-;Function UpdateRemove
-;-----------------------------------------------------------------------------------------------------------------------
-;FunctionEnd
-
 var keepfiles
 
 ;-----------------------------------------------------------------------------------------------------------------------
@@ -834,12 +840,17 @@ Function KeepFilesPage
 
   IntCmp $Updating 1 +1 defaultkeep
 
-  WriteINIStr $TEMP\keepfiles.ini "Field 3" "State" 0
-  WriteINIStr $TEMP\keepfiles.ini "Field 2" "State" 1
+  WriteINIStr $INI "Field 3" "State" 0
+  WriteINIStr $INI "Field 2" "State" 1
+  FlushINI $INI
+
 defaultkeep:
-  !insertmacro MUI_INSTALLOPTIONS_DISPLAY "keepfiles.ini"
-  ; Get the user entered values.
-  !insertmacro MUI_INSTALLOPTIONS_READ $keepfiles "keepfiles.ini" "Field 3" "State"
+
+  InstallOptions::initDialog /NOUNLOAD "$INI"
+  InstallOptions::show
+
+  ReadINIStr $keepfiles $INI "Field 3" "State"
+
 nodisplay:
 FunctionEnd
 
@@ -851,7 +862,6 @@ Function RemoveFile
   pop $filename
   IntCmp $keepfiles 1 keepit
 
-  ;MessageBox MB_ICONINFORMATION|MB_OK $EXEDIR\$filename
   Delete $EXEDIR\$filename
 
 keepit:
