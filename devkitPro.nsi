@@ -1,5 +1,8 @@
-; $Id: devkitPro.nsi,v 1.13 2005-08-14 02:05:34 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.14 2005-08-16 08:07:49 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.13  2005/08/14 02:05:34  wntrmute
+; don't select packages which haven't been installed
+;
 ; Revision 1.12  2005/08/14 00:56:04  wntrmute
 ; default updater to remove downloads
 ;
@@ -32,13 +35,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.0.4"
+!define PRODUCT_VERSION "1.0.5"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "5"
+!define BUILD "6"
 
 SetCompressor lzma
 
@@ -814,20 +817,7 @@ Function ExtractLib
 
   RMDir /r $INSTDIR\$FOLDER
 
-  nsExec::ExecToLog '"$INSTDIR\msys\bin\bzip2" -k -d $LIB'
-  pop $0 # return value/error/timeout
-  CreateDirectory "$INSTDIR\$FOLDER"
-
-  StrLen $R0 $LIB
-  IntOp $R0 $R0 - 4
-  StrCpy $R1 $LIB $R0
-
-  Rename $R1 $INSTDIR\$FOLDER\$R1
-  SetOutPath $INSTDIR\$FOLDER
-  nsExec::ExecToLog '"$INSTDIR\msys\bin\tar" -xvf $R1'
-  Delete $INSTDIR\$FOLDER\$R1
-
-  SetOutPath $EXEDIR
+  untgz::extract -d "$INSTDIR/$FOLDER" -zbz2 "$EXEDIR/$LIB"
 
   WriteINIStr $INSTDIR\installed.ini $R2 Version $R3
   push $LIB
