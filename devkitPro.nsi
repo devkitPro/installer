@@ -1,5 +1,8 @@
-; $Id: devkitPro.nsi,v 1.14 2005-08-16 08:07:49 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.15 2005-08-24 05:04:49 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.14  2005/08/16 08:07:49  wntrmute
+; use plugin for tar.bz2
+;
 ; Revision 1.13  2005/08/14 02:05:34  wntrmute
 ; don't select packages which haven't been installed
 ;
@@ -263,8 +266,6 @@ Section -installComponents
 test_Msys:
   !insertmacro SectionFlagIsSet ${SecMsys} ${SF_SELECTED} install_Msys SkipMsys
 install_Msys:
-
-  RMDir /r $INSTDIR\msys
 
   ExecWait '"$EXEDIR\$MSYS" -y -o$INSTDIR'
   WriteINIStr $INSTDIR\installed.ini msys Version $MSYS_VER
@@ -813,9 +814,6 @@ Function ExtractLib
   SectionGetFlags $R0 $0
   IntOp $0 $0 & ${SF_SELECTED}
   IntCmp $0 ${SF_SELECTED} +1 SkipExtract
-
-
-  RMDir /r $INSTDIR\$FOLDER
 
   untgz::extract -d "$INSTDIR/$FOLDER" -zbz2 "$EXEDIR/$LIB"
 
