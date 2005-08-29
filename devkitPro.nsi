@@ -1,5 +1,10 @@
-; $Id: devkitPro.nsi,v 1.16 2005-08-25 09:10:58 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.17 2005-08-29 21:22:04 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.16  2005/08/25 09:10:58  wntrmute
+; updated version
+; create pn2 appdata folder before installing usertools
+; create libdirs before extracting
+;
 ; Revision 1.15  2005/08/24 05:04:49  wntrmute
 ; updated devkitPSP
 ; stop deleting msys and library dirs
@@ -867,6 +872,7 @@ Function RemoveFile
 keepit:
 
 FunctionEnd
+
 ;-----------------------------------------------------------------------------------------------------------------------
 ; faking an array using separators
 ;-----------------------------------------------------------------------------------------------------------------------
