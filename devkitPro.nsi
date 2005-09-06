@@ -1,5 +1,8 @@
-; $Id: devkitPro.nsi,v 1.17 2005-08-29 21:22:04 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.18 2005-09-06 15:44:51 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.17  2005/08/29 21:22:04  wntrmute
+; *** empty log message ***
+;
 ; Revision 1.16  2005/08/25 09:10:58  wntrmute
 ; updated version
 ; create pn2 appdata folder before installing usertools
@@ -47,13 +50,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.0.6"
+!define PRODUCT_VERSION "1.0.7"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "7"
+!define BUILD "8"
 
 SetCompressor lzma
 
@@ -824,7 +827,7 @@ Function ExtractLib
   IntOp $0 $0 & ${SF_SELECTED}
   IntCmp $0 ${SF_SELECTED} +1 SkipExtract
 
-  CreateDirectory "$INSTDIR/$FOLDER"
+  CreateDirectory "$INSTDIR\$FOLDER"
   untgz::extract -d "$INSTDIR/$FOLDER" -zbz2 "$EXEDIR/$LIB"
 
   WriteINIStr $INSTDIR\installed.ini $R2 Version $R3
