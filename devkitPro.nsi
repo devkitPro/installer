@@ -1,5 +1,8 @@
-; $Id: devkitPro.nsi,v 1.18 2005-09-06 15:44:51 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.19 2005-09-14 17:36:24 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.18  2005/09/06 15:44:51  wntrmute
+; fixed path error on library create dir
+;
 ; Revision 1.17  2005/08/29 21:22:04  wntrmute
 ; *** empty log message ***
 ;
@@ -50,13 +53,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.0.7"
+!define PRODUCT_VERSION "1.0.8"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "8"
+!define BUILD "9"
 
 SetCompressor lzma
 
@@ -159,6 +162,8 @@ var LIBNDS
 var LIBNDS_VER
 var NDSEXAMPLES
 var NDSEXAMPLES_VER
+var GBAEXAMPLES
+var GBAEXAMPLES_VER
 var LIBMIRKO
 var LIBMIRKO_VER
 var PNOTEPAD
@@ -188,6 +193,9 @@ SectionGroup devkitARM SecdevkitARM
 	SectionEnd
 
 	Section "nds examples" ndsexamples
+	SectionEnd
+
+	Section "gba examples" gbaexamples
 	SectionEnd
 
 SectionGroupEnd
@@ -252,6 +260,11 @@ Section -installComponents
 
   push ${ndsexamples}
   push $NDSEXAMPLES
+  push $MirrorURL/devkitpro
+  Call DownloadIfNeeded
+
+  push ${gbaexamples}
+  push $GBAEXAMPLES
   push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
@@ -335,6 +348,14 @@ SkipMsys:
   push "ndsexamples"
   push $NDSEXAMPLES_VER
   call ExtractLib
+
+  push ${gbaexamples}
+  push "examples\gba"
+  push $GBAEXAMPLES
+  push "gbaexamples"
+  push $GBAEXAMPLES_VER
+  call ExtractLib
+
 
   !insertmacro SectionFlagIsSet ${Secinsight} ${SF_SELECTED} +1 SkipInsight
 
@@ -450,6 +471,7 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibmirko} "Gamepark GP32 development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibnds} "Nintendo DS development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${ndsexamples} "Nintendo DS example code"
+  !insertmacro MUI_DESCRIPTION_TEXT ${gbaexamples} "Nintendo GBA example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${Secinsight} "GUI debugger"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
@@ -458,8 +480,6 @@ var INI
 ;-----------------------------------------------------------------------------------------------------------------------
 Function .onInit
 ;-----------------------------------------------------------------------------------------------------------------------
-  InitPluginsDir
-  ifFileExists $EXEDIR\$R1 skipextract
   ; extract built in ini file
   File "/oname=$EXEDIR\devkitProUpdate.ini" INIfiles\devkitProUpdate.ini
 
@@ -476,12 +496,16 @@ skipextract:
   Rename $EXEDIR\devkitProUpdate.ini.old $EXEDIR\devkitProUpdate.ini
 
 gotINI:
-  Delete $EXEDIR\devkitProUpdate.ini.old
 
   ; Read devkitProUpdate build info from INI file
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitProUpdate" "Build"
 
-  IntCmp ${BUILD} $R0 Finish newVersion Finish
+  IntCmp ${BUILD} $R0 Finish newVersion +1
+
+    ; downloaded ini older than current
+    Delete $EXEDIR\devkitProUpdate.ini
+    Rename $EXEDIR\devkitProUpdate.ini.old $EXEDIR\devkitProUpdate.ini
+    Goto Finish
 
   newVersion:
     MessageBox MB_YESNO|MB_ICONINFORMATION|MB_DEFBUTTON1 "A newer version of devkitProUpdater is available. Would you like to upgrade now?" IDYES upgradeMe IDNO Finish
@@ -489,6 +513,8 @@ gotINI:
   upgradeMe:
     Call UpgradedevkitProUpdate
   Finish:
+
+  Delete $EXEDIR\devkitProUpdate.ini.old
 
   StrCpy $Updating 0
 
@@ -533,6 +559,11 @@ installing:
   ReadINIStr $NDSEXAMPLES "$EXEDIR\devkitProUpdate.ini" "ndsexamples" "File"
   ReadINIStr $NDSEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "ndsexamples" "Version"
   SectionSetSize ${ndsexamples} $R0
+
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "gbaexamples" "Size"
+  ReadINIStr $GBAEXAMPLES "$EXEDIR\devkitProUpdate.ini" "gbaexamples" "File"
+  ReadINIStr $GBAEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "gbaexamples" "Version"
+  SectionSetSize ${gbaexamples} $R0
 
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libmirko" "Size"
   ReadINIStr $LIBMIRKO "$EXEDIR\devkitProUpdate.ini" "libmirko" "File"
@@ -597,6 +628,11 @@ installing:
   push $0
   push $NDSEXAMPLES_VER
   push ${ndsexamples}
+  call checkVersion
+
+  push $0
+  push $GBAEXAMPLES_VER
+  push ${gbaexamples}
   call checkVersion
 
   IntCmp $Updates 0 +1 dkARMupdates dkARMupdates
