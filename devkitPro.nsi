@@ -1,5 +1,9 @@
-; $Id: devkitPro.nsi,v 1.19 2005-09-14 17:36:24 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.20 2005-09-18 22:11:57 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.19  2005/09/14 17:36:24  wntrmute
+; added gba examples
+; updated to latest devkitARM, libgba & libnds
+;
 ; Revision 1.18  2005/09/06 15:44:51  wntrmute
 ; fixed path error on library create dir
 ;
@@ -53,13 +57,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.0.8"
+!define PRODUCT_VERSION "1.0.9"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "9"
+!define BUILD "10"
 
 SetCompressor lzma
 
@@ -164,6 +168,8 @@ var NDSEXAMPLES
 var NDSEXAMPLES_VER
 var GBAEXAMPLES
 var GBAEXAMPLES_VER
+var CUBEEXAMPLES
+var CUBEEXAMPLES_VER
 var LIBMIRKO
 var LIBMIRKO_VER
 var PNOTEPAD
@@ -200,8 +206,12 @@ SectionGroup devkitARM SecdevkitARM
 
 SectionGroupEnd
 
-Section "devkitPPC" SecdevkitPPC
-SectionEnd
+SectionGroup "devkitPPC" grpdevkitPPC
+        Section "devkitPPC" SecdevkitPPC
+        SectionEnd
+	Section "gamecube examples" cubeexamples
+	SectionEnd
+SectionGroupEnd
 
 Section "devkitPSP" SecdevkitPSP
 SectionEnd
@@ -265,6 +275,11 @@ Section -installComponents
 
   push ${gbaexamples}
   push $GBAEXAMPLES
+  push $MirrorURL/devkitpro
+  Call DownloadIfNeeded
+
+  push ${cubeexamples}
+  push $CUBEEXAMPLES
   push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
@@ -356,6 +371,12 @@ SkipMsys:
   push $GBAEXAMPLES_VER
   call ExtractLib
 
+  push ${cubeexamples}
+  push "examples\gamecube"
+  push $CUBEEXAMPLES
+  push "cubeexamples"
+  push $CUBEEXAMPLES_VER
+  call ExtractLib
 
   !insertmacro SectionFlagIsSet ${Secinsight} ${SF_SELECTED} +1 SkipInsight
 
@@ -472,6 +493,7 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibnds} "Nintendo DS development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${ndsexamples} "Nintendo DS example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${gbaexamples} "Nintendo GBA example code"
+  !insertmacro MUI_DESCRIPTION_TEXT ${cubeexamples} "Nintendo Gamecube example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${Secinsight} "GUI debugger"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
@@ -483,7 +505,6 @@ Function .onInit
   ; extract built in ini file
   File "/oname=$EXEDIR\devkitProUpdate.ini" INIfiles\devkitProUpdate.ini
 
-skipextract:
   ; save the current ini file in case download fails
   Rename $EXEDIR\devkitProUpdate.ini $EXEDIR\devkitProUpdate.ini.old
   ; Quietly download the latest devkitProUpdate.ini file
@@ -565,6 +586,11 @@ installing:
   ReadINIStr $GBAEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "gbaexamples" "Version"
   SectionSetSize ${gbaexamples} $R0
 
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "cubeexamples" "Size"
+  ReadINIStr $CUBEEXAMPLES "$EXEDIR\devkitProUpdate.ini" "cubeexamples" "File"
+  ReadINIStr $CUBEEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "cubeexamples" "Version"
+  SectionSetSize ${cubeexamples} $R0
+
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libmirko" "Size"
   ReadINIStr $LIBMIRKO "$EXEDIR\devkitProUpdate.ini" "libmirko" "File"
   ReadINIStr $LIBMIRKO_VER "$EXEDIR\devkitProUpdate.ini" "libmirko" "Version"
@@ -630,6 +656,8 @@ installing:
   push ${ndsexamples}
   call checkVersion
 
+  ReadINIStr $0 "$INSTDIR\installed.ini" "gbaexamples" "Version"
+
   push $0
   push $GBAEXAMPLES_VER
   push ${gbaexamples}
@@ -647,12 +675,27 @@ dkARMupdates:
   push ${SecMsys}
   call checkVersion
 
+  StrCpy $R2 $Updates
   ReadINIStr $0 "$INSTDIR\installed.ini" "devkitPPC" "Version"
 
   push $0
   push $DEVKITPPC_VER
   push ${SecdevkitPPC}
   call checkVersion
+
+  ReadINIStr $0 "$INSTDIR\installed.ini" "cubeexamples" "Version"
+
+  push $0
+  push $CUBEEXAMPLES_VER
+  push ${cubeexamples}
+  call checkVersion
+
+  IntOp $R1 $Updates - $R2
+  IntCmp $R1 0 +1 dkPPCupdates dkPPCupdates
+
+    SectionSetText ${grpdevkitPPC} ""
+
+dkPPCupdates:
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "devkitPSP" "Version"
 
