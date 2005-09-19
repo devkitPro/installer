@@ -1,5 +1,9 @@
-; $Id: devkitPro.nsi,v 1.20 2005-09-18 22:11:57 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.21 2005-09-19 22:10:07 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.20  2005/09/18 22:11:57  wntrmute
+; added gamecube examples
+; fixed checks for installed examples
+;
 ; Revision 1.19  2005/09/14 17:36:24  wntrmute
 ; added gba examples
 ; updated to latest devkitARM, libgba & libnds
@@ -435,10 +439,8 @@ SkipMenu:
   !insertmacro MUI_STARTMENU_WRITE_END
   WriteUninstaller "$INSTDIR\uninst.exe"
   IntCmp $Updating 1 SkipInstall
-  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninst.exe"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "InstallLocation" "$INSTDIR"
-  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
 
@@ -453,6 +455,9 @@ SkipMenu:
   SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 
 SkipInstall:
+  ; write the version to the reg key so add/remove prograns has the right one
+  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
+  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
 
 SectionEnd
 
