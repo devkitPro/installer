@@ -1,5 +1,8 @@
-; $Id: devkitPro.nsi,v 1.21 2005-09-19 22:10:07 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.22 2005-09-30 11:16:58 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.21  2005/09/19 22:10:07  wntrmute
+; update add/remove title/version when updating
+;
 ; Revision 1.20  2005/09/18 22:11:57  wntrmute
 ; added gamecube examples
 ; fixed checks for installed examples
@@ -61,13 +64,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.0.9"
+!define PRODUCT_VERSION "1.1.0"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "10"
+!define BUILD "11"
 
 SetCompressor lzma
 
@@ -160,10 +163,6 @@ var MSYS
 var MSYS_VER
 var DEVKITARM
 var DEVKITARM_VER
-var DEVKITPPC
-var DEVKITPPC_VER
-var DEVKITPSP
-var DEVKITPSP_VER
 var LIBGBA
 var LIBGBA_VER
 var LIBNDS
@@ -172,8 +171,14 @@ var NDSEXAMPLES
 var NDSEXAMPLES_VER
 var GBAEXAMPLES
 var GBAEXAMPLES_VER
+var DEVKITPPC
+var DEVKITPPC_VER
 var CUBEEXAMPLES
 var CUBEEXAMPLES_VER
+var DEVKITPSP
+var DEVKITPSP_VER
+var PSPDOC
+var PSPDOC_VER
 var LIBMIRKO
 var LIBMIRKO_VER
 var PNOTEPAD
@@ -217,8 +222,12 @@ SectionGroup "devkitPPC" grpdevkitPPC
 	SectionEnd
 SectionGroupEnd
 
+SectionGroup "devkitPSP" grpdevkitPSP
 Section "devkitPSP" SecdevkitPSP
 SectionEnd
+Section "psp sdk documentation" pspdoc
+SectionEnd
+SectionGroupEnd
 
 Section "Programmer's Notepad" Pnotepad
 SectionEnd
@@ -247,16 +256,6 @@ Section -installComponents
   push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
-  push ${SecdevkitPPC}
-  push $DEVKITPPC
-  push $MirrorURL/devkitpro
-  Call DownloadIfNeeded
-
-  push ${SecdevkitPSP}
-  push $DEVKITPSP
-  push $MirrorURL/devkitpro
-  Call DownloadIfNeeded
-
   push ${Seclibgba}
   push $LIBGBA
   push $MirrorURL/devkitpro
@@ -282,8 +281,23 @@ Section -installComponents
   push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
+  push ${SecdevkitPPC}
+  push $DEVKITPPC
+  push $MirrorURL/devkitpro
+  Call DownloadIfNeeded
+
   push ${cubeexamples}
   push $CUBEEXAMPLES
+  push $MirrorURL/devkitpro
+  Call DownloadIfNeeded
+
+  push ${SecdevkitPSP}
+  push $DEVKITPSP
+  push $MirrorURL/devkitpro
+  Call DownloadIfNeeded
+
+  push ${pspdoc}
+  push $PSPDOC
   push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
@@ -382,6 +396,13 @@ SkipMsys:
   push $CUBEEXAMPLES_VER
   call ExtractLib
 
+  push ${pspdoc}
+  push "doc\pspsdk"
+  push $PSPDOC
+  push "pspdoc"
+  push $PSPDOC_VER
+  call ExtractLib
+
   !insertmacro SectionFlagIsSet ${Secinsight} ${SF_SELECTED} +1 SkipInsight
 
   RMDir /r "$INSTDIR/Insight"
@@ -430,10 +451,16 @@ skip_copy:
   SetOutPath $INSTDIR\msys\bin
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\MSys.lnk" "$INSTDIR\msys\msys.bat" "-norxvt" "$INSTDIR\msys\m.ico"
 CheckPN2:
-  !insertmacro SectionFlagIsSet ${Pnotepad} ${SF_SELECTED} +1 SkipMenu
+  !insertmacro SectionFlagIsSet ${Pnotepad} ${SF_SELECTED} +1 SkipPN2Menu
   SetOutPath "$INSTDIR\Programmers Notepad"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Programmers Notepad.lnk" "$INSTDIR\Programmers Notepad\pn.exe"
-SkipMenu:
+SkipPN2Menu:
+  CreateDirectory "$SMPROGRAMS\$ICONS_GROUP\documentation"
+  !insertmacro SectionFlagIsSet ${pspdoc} ${SF_SELECTED} +1 SkipPSPdocMenu
+  WriteIniStr "$INSTDIR\pspsdk.url" "InternetShortcut" "URL" "file://$INSTDIR\doc\pspsdk\doc\html\index.html"
+  CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\documentation\pspsdk.lnk" "$INSTDIR\pspsdk.url"
+
+SkipPSPdocMenu:
   SetOutPath $INSTDIR
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Update.lnk" "$INSTDIR\$R1"
   !insertmacro MUI_STARTMENU_WRITE_END
@@ -560,26 +587,27 @@ installing:
   ReadINIStr $MSYS "$EXEDIR\devkitProUpdate.ini" "msys" "File"
   ReadINIStr $MSYS_VER "$EXEDIR\devkitProUpdate.ini" "msys" "Version"
   SectionSetSize ${SecMsys} $R0
+
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitARM" "Size"
   ReadINIStr $DEVKITARM "$EXEDIR\devkitProUpdate.ini" "devkitARM" "File"
   ReadINIStr $DEVKITARM_VER "$EXEDIR\devkitProUpdate.ini" "devkitARM" "Version"
   SectionSetSize ${SecdkARM} $R0
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitPPC" "Size"
-  ReadINIStr $DEVKITPPC "$EXEDIR\devkitProUpdate.ini" "devkitPPC" "File"
-  ReadINIStr $DEVKITPPC_VER "$EXEDIR\devkitProUpdate.ini" "devkitPPC" "Version"
-  SectionSetSize ${SecdevkitPPC} $R0
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitPSP" "Size"
-  ReadINIStr $DEVKITPSP "$EXEDIR\devkitProUpdate.ini" "devkitPSP" "File"
-  ReadINIStr $DEVKITPSP_VER "$EXEDIR\devkitProUpdate.ini" "devkitPSP" "Version"
-  SectionSetSize ${SecdevkitPSP} $R0
+
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libgba" "Size"
   ReadINIStr $LIBGBA "$EXEDIR\devkitProUpdate.ini" "libgba" "File"
   ReadINIStr $LIBGBA_VER "$EXEDIR\devkitProUpdate.ini" "libgba" "Version"
   SectionSetSize ${Seclibgba} $R0
+
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libnds" "Size"
   ReadINIStr $LIBNDS "$EXEDIR\devkitProUpdate.ini" "libnds" "File"
   ReadINIStr $LIBNDS_VER "$EXEDIR\devkitProUpdate.ini" "libnds" "Version"
   SectionSetSize ${Seclibnds} $R0
+
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libmirko" "Size"
+  ReadINIStr $LIBMIRKO "$EXEDIR\devkitProUpdate.ini" "libmirko" "File"
+  ReadINIStr $LIBMIRKO_VER "$EXEDIR\devkitProUpdate.ini" "libmirko" "Version"
+  SectionSetSize ${Seclibmirko} $R0
 
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "ndsexamples" "Size"
   ReadINIStr $NDSEXAMPLES "$EXEDIR\devkitProUpdate.ini" "ndsexamples" "File"
@@ -591,19 +619,31 @@ installing:
   ReadINIStr $GBAEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "gbaexamples" "Version"
   SectionSetSize ${gbaexamples} $R0
 
+  ReadINIStr $DEVKITPPC "$EXEDIR\devkitProUpdate.ini" "devkitPPC" "File"
+  ReadINIStr $DEVKITPPC_VER "$EXEDIR\devkitProUpdate.ini" "devkitPPC" "Version"
+  SectionSetSize ${SecdevkitPPC} $R0
+
+
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "cubeexamples" "Size"
   ReadINIStr $CUBEEXAMPLES "$EXEDIR\devkitProUpdate.ini" "cubeexamples" "File"
   ReadINIStr $CUBEEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "cubeexamples" "Version"
   SectionSetSize ${cubeexamples} $R0
 
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libmirko" "Size"
-  ReadINIStr $LIBMIRKO "$EXEDIR\devkitProUpdate.ini" "libmirko" "File"
-  ReadINIStr $LIBMIRKO_VER "$EXEDIR\devkitProUpdate.ini" "libmirko" "Version"
-  SectionSetSize ${Seclibmirko} $R0
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitPSP" "Size"
+  ReadINIStr $DEVKITPSP "$EXEDIR\devkitProUpdate.ini" "devkitPSP" "File"
+  ReadINIStr $DEVKITPSP_VER "$EXEDIR\devkitProUpdate.ini" "devkitPSP" "Version"
+  SectionSetSize ${SecdevkitPSP} $R0
+
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "pspdoc" "Size"
+  ReadINIStr $PSPDOC "$EXEDIR\devkitProUpdate.ini" "pspdoc" "File"
+  ReadINIStr $PSPDOC_VER "$EXEDIR\devkitProUpdate.ini" "pspdoc" "Version"
+  SectionSetSize ${pspdoc} $R0
+
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "pnotepad" "Size"
   ReadINIStr $PNOTEPAD "$EXEDIR\devkitProUpdate.ini" "pnotepad" "File"
   ReadINIStr $PNOTEPAD_VER "$EXEDIR\devkitProUpdate.ini" "pnotepad" "Version"
   SectionSetSize ${Pnotepad} $R0
+
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "insight" "Size"
   ReadINIStr $INSIGHT "$EXEDIR\devkitProUpdate.ini" "insight" "File"
   ReadINIStr $INSIGHT_VER "$EXEDIR\devkitProUpdate.ini" "insight" "Version"
@@ -698,10 +738,11 @@ dkARMupdates:
   IntOp $R1 $Updates - $R2
   IntCmp $R1 0 +1 dkPPCupdates dkPPCupdates
 
-    SectionSetText ${grpdevkitPPC} ""
+  SectionSetText ${grpdevkitPPC} ""
 
 dkPPCupdates:
 
+  StrCpy $R2 $Updates
   ReadINIStr $0 "$INSTDIR\installed.ini" "devkitPSP" "Version"
 
   push $0
@@ -709,7 +750,18 @@ dkPPCupdates:
   push ${SecdevkitPSP}
   call checkVersion
 
+  ReadINIStr $0 "$INSTDIR\installed.ini" "pspdoc" "Version"
+  push $0
+  push $PSPDOC_VER
+  push ${pspdoc}
+  call checkVersion
 
+  IntOp $R1 $Updates - $R2
+  IntCmp $R1 0 +1 dkPSPupdates dkPSPupdates
+
+  SectionSetText ${grpdevkitPSP} ""
+
+dkPSPupdates:
   ReadINIStr $0 "$INSTDIR\installed.ini" "pnotepad" "Version"
 
   push $0
