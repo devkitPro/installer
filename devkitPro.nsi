@@ -1,5 +1,8 @@
-; $Id: devkitPro.nsi,v 1.22 2005-09-30 11:16:58 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.23 2005-10-23 15:59:14 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.22  2005/09/30 11:16:58  wntrmute
+; added psp sdk documentation
+;
 ; Revision 1.21  2005/09/19 22:10:07  wntrmute
 ; update add/remove title/version when updating
 ;
@@ -64,13 +67,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.1.0"
+!define PRODUCT_VERSION "1.2.0"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "11"
+!define BUILD "12"
 
 SetCompressor lzma
 
@@ -171,6 +174,8 @@ var NDSEXAMPLES
 var NDSEXAMPLES_VER
 var GBAEXAMPLES
 var GBAEXAMPLES_VER
+var GP32EXAMPLES
+var GP32EXAMPLES_VER
 var DEVKITPPC
 var DEVKITPPC_VER
 var CUBEEXAMPLES
@@ -190,49 +195,70 @@ var BASEDIR
 
 var Updates
 
-Section "msys 1.0.10" SecMsys
+InstType "Full"
+InstType "devkitARM"
+InstType "devkitPPC"
+InstType "devkitPSP"
+
+Section "Minimal System" SecMsys
+    SectionIn 1 2 3 4
 SectionEnd
 
 SectionGroup devkitARM SecdevkitARM
 	; Application
 	Section "devkitARM" SecdkARM
-	SectionEnd
+          SectionIn 1 2
+        SectionEnd
 
 	Section "libgba" Seclibgba
+          SectionIn 1 2
         SectionEnd
 
 	Section "libmirko" Seclibmirko
+          SectionIn 1 2
 	SectionEnd
 
 	Section "libnds" Seclibnds
+          SectionIn 1 2
 	SectionEnd
 
 	Section "nds examples" ndsexamples
+          SectionIn 1 2
 	SectionEnd
 
 	Section "gba examples" gbaexamples
+          SectionIn 1 2
 	SectionEnd
 
+	Section "gp32 examples" gp32examples
+          SectionIn 1 2
+	SectionEnd
 SectionGroupEnd
 
 SectionGroup "devkitPPC" grpdevkitPPC
         Section "devkitPPC" SecdevkitPPC
+          SectionIn 1 3
         SectionEnd
 	Section "gamecube examples" cubeexamples
+          SectionIn 1 3
 	SectionEnd
 SectionGroupEnd
 
 SectionGroup "devkitPSP" grpdevkitPSP
-Section "devkitPSP" SecdevkitPSP
-SectionEnd
-Section "psp sdk documentation" pspdoc
-SectionEnd
+  Section "devkitPSP" SecdevkitPSP
+    SectionIn 1 4
+  SectionEnd
+  Section "psp sdk documentation" pspdoc
+    SectionIn 1 4
+  SectionEnd
 SectionGroupEnd
 
 Section "Programmer's Notepad" Pnotepad
+  SectionIn 1 2 3 4
 SectionEnd
 
 Section "Insight" Secinsight
+  SectionIn 1
 SectionEnd
 
 Section -installComponents
@@ -278,6 +304,11 @@ Section -installComponents
 
   push ${gbaexamples}
   push $GBAEXAMPLES
+  push $MirrorURL/devkitpro
+  Call DownloadIfNeeded
+
+  push ${gp32examples}
+  push $GP32EXAMPLES
   push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
@@ -387,6 +418,13 @@ SkipMsys:
   push $GBAEXAMPLES
   push "gbaexamples"
   push $GBAEXAMPLES_VER
+  call ExtractLib
+
+  push ${gp32examples}
+  push "examples\gp32"
+  push $GP32EXAMPLES
+  push "gp32examples"
+  push $GP32EXAMPLES_VER
   call ExtractLib
 
   push ${cubeexamples}
@@ -519,12 +557,14 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${SecdkARM} "toolchain for ARM platforms"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecdevkitPPC} "toolchain for powerpc platforms"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecdevkitPSP} "toolchain for psp"
+  !insertmacro MUI_DESCRIPTION_TEXT ${pspdoc} "PSP SDK documentation"
   !insertmacro MUI_DESCRIPTION_TEXT ${Pnotepad} "a programmer's editor"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibgba} "Nintendo GBA development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibmirko} "Gamepark GP32 development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibnds} "Nintendo DS development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${ndsexamples} "Nintendo DS example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${gbaexamples} "Nintendo GBA example code"
+  !insertmacro MUI_DESCRIPTION_TEXT ${gp32examples} "Gamepark GP32 example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${cubeexamples} "Nintendo Gamecube example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${Secinsight} "GUI debugger"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
@@ -537,19 +577,21 @@ Function .onInit
   ; extract built in ini file
   File "/oname=$EXEDIR\devkitProUpdate.ini" INIfiles\devkitProUpdate.ini
 
+
   ; save the current ini file in case download fails
   Rename $EXEDIR\devkitProUpdate.ini $EXEDIR\devkitProUpdate.ini.old
-  ; Quietly download the latest devkitProUpdate.ini file
-  NSISdl::download_quiet "http://devkitpro.sourceforge.net/devkitProUpdate.ini" "$EXEDIR\devkitProUpdate.ini"
 
+
+  ; Quietly download the latest devkitProUpdate.ini file
+  ;NSISdl::download_quiet "http://devkitpro.sourceforge.net/devkitProUpdate.ini" "$EXEDIR\devkitProUpdate.ini"
+  InetLoad::load  /SILENT "" "http://devkitpro.sourceforge.net/devkitProUpdate.ini" "$EXEDIR\devkitProUpdate.ini" /END
   Pop $0
-  StrCmp $0 "success" gotINI
+  StrCmp $0 "OK" gotINI
 
   ; download failed so retrieve old file
   Rename $EXEDIR\devkitProUpdate.ini.old $EXEDIR\devkitProUpdate.ini
 
 gotINI:
-
   ; Read devkitProUpdate build info from INI file
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitProUpdate" "Build"
 
@@ -580,6 +622,11 @@ gotINI:
   StrCpy $Updating 1
 
   StrCpy $ChooseMessage "Choose the devkitPro components you would like to update."
+
+  InstTypeSetText 0 ""
+  InstTypeSetText 1 ""
+  InstTypeSetText 2 ""
+  InstTypeSetText 3 ""
 
 installing:
 
@@ -618,6 +665,11 @@ installing:
   ReadINIStr $GBAEXAMPLES "$EXEDIR\devkitProUpdate.ini" "gbaexamples" "File"
   ReadINIStr $GBAEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "gbaexamples" "Version"
   SectionSetSize ${gbaexamples} $R0
+
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "gp32examples" "Size"
+  ReadINIStr $GP32EXAMPLES "$EXEDIR\devkitProUpdate.ini" "gp32examples" "File"
+  ReadINIStr $GP32EXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "gp32examples" "Version"
+  SectionSetSize ${gp32examples} $R0
 
   ReadINIStr $DEVKITPPC "$EXEDIR\devkitProUpdate.ini" "devkitPPC" "File"
   ReadINIStr $DEVKITPPC_VER "$EXEDIR\devkitProUpdate.ini" "devkitPPC" "Version"
@@ -706,6 +758,13 @@ installing:
   push $0
   push $GBAEXAMPLES_VER
   push ${gbaexamples}
+  call checkVersion
+
+  ReadINIStr $0 "$INSTDIR\installed.ini" "gp32examples" "Version"
+
+  push $0
+  push $GP32EXAMPLES_VER
+  push ${gp32examples}
   call checkVersion
 
   IntCmp $Updates 0 +1 dkARMupdates dkARMupdates
@@ -848,9 +907,10 @@ Function UpgradedevkitProUpdate
   ReadINIStr $R1 "$EXEDIR\devkitProUpdate.ini" "devkitProUpdate" "Filename"
 
   DetailPrint "Downloading new version of devkitProUpdater..."
-  NSISdl::download $R0/$R1 "$EXEDIR\$R1"
+  ;NSISdl::download $R0/$R1 "$EXEDIR\$R1"
+  InetLoad::load /RESUME "" "$R0/$R1" "$EXEDIR\$R1" /END
   Pop $0
-  StrCmp $0 success success
+  StrCmp $0 "OK" success
     ; Failure
     SetDetailsView show
     DetailPrint "Download failed: $0"
@@ -908,9 +968,11 @@ Function DownloadIfNeeded
 
   ifFileExists $EXEDIR\$R1 FileFound
 
-  nsisdl::download $R0/$R1 $EXEDIR\$R1
+  ;nsisdl::download $R0/$R1 $EXEDIR\$R1
+  InetLoad::load /RESUME "" "$R0/$R1" "$EXEDIR\$R1" /END
   Pop $0
-  StrCmp $0 success FileFound
+  StrCmp $0 "OK" FileFound
+
   Abort "Could not download $R1!"
 SkipDL:
 FileFound:
