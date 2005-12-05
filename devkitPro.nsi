@@ -1,5 +1,9 @@
-; $Id: devkitPro.nsi,v 1.23 2005-10-23 15:59:14 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.24 2005-12-05 21:21:18 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.23  2005/10/23 15:59:14  wntrmute
+; switched to InetLoad
+; added gp32 examples
+;
 ; Revision 1.22  2005/09/30 11:16:58  wntrmute
 ; added psp sdk documentation
 ;
@@ -67,13 +71,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.2.0"
+!define PRODUCT_VERSION "1.2.1"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "12"
+!define BUILD "13"
 
 SetCompressor lzma
 
@@ -334,7 +338,7 @@ Section -installComponents
 
   push ${pnotepad}
   push $PNOTEPAD
-  push $MirrorURL/pnotepad
+  push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
   push ${Secinsight}
