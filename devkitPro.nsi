@@ -1,5 +1,8 @@
-; $Id: devkitPro.nsi,v 1.24 2005-12-05 21:21:18 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.25 2005-12-28 08:45:55 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.24  2005/12/05 21:21:18  wntrmute
+; update build and version numbers
+;
 ; Revision 1.23  2005/10/23 15:59:14  wntrmute
 ; switched to InetLoad
 ; added gp32 examples
@@ -71,13 +74,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.2.1"
+!define PRODUCT_VERSION "1.2.2"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "13"
+!define BUILD "14"
 
 SetCompressor lzma
 
@@ -519,7 +522,7 @@ SkipPSPdocMenu:
   ReadRegStr $1 HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "PATH"
   ; remove it to avoid multiple paths with separate installs
   ${StrRep} $1 $1 "$INSTDIR\msys\bin;" ""
-  StrCpy $1 $INSTDIR\msys\bin;$1
+  StrCpy $1 "$INSTDIR\msys\bin;$1"
   WriteRegExpandStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "PATH" $1
   SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 
@@ -1105,7 +1108,7 @@ Function ChooseMirrorPage
 
   StrCpy $INSTALL_ACTION "Please wait while ${PRODUCT_NAME} downloads the components you selected."
   StrCpy $FINISH_TITLE "Download complete."
-  StrCpy $FINISH_TEXT "${PRODUCT_NAME} has finished downloading the components you selected. To install the package please run the installer again and select the download and install option."
+  StrCpy $FINISH_TEXT "${PRODUCT_NAME} has finished downloading the components you selected. To install the package please run the installer again and select the download and install option. To install on a machine with no net access copy all the files downloaded by this process, the installer will use the files in the same directory instead of downloading."
 
   Goto done
   
