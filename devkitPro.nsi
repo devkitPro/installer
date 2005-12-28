@@ -1,5 +1,9 @@
-; $Id: devkitPro.nsi,v 1.25 2005-12-28 08:45:55 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.26 2005-12-28 16:29:54 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.25  2005/12/28 08:45:55  wntrmute
+; fixed PATH error
+; updated INI file for latest files
+;
 ; Revision 1.24  2005/12/05 21:21:18  wntrmute
 ; update build and version numbers
 ;
@@ -74,13 +78,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.2.2"
+!define PRODUCT_VERSION "1.2.3"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "14"
+!define BUILD "15"
 
 SetCompressor lzma
 
@@ -269,6 +273,8 @@ Section "Insight" Secinsight
 SectionEnd
 
 Section -installComponents
+
+  SetAutoClose false
 
   StrCpy $R0 $INSTDIR 1
   StrLen $0 $INSTDIR
@@ -581,10 +587,18 @@ var INI
 ;-----------------------------------------------------------------------------------------------------------------------
 Function .onInit
 ;-----------------------------------------------------------------------------------------------------------------------
+  ifFileExists $EXEDIR\devkitProUpdate.ini +1 extractINI
+
+  ReadINIStr $R1 "$EXEDIR\devkitProUpdate.ini" "devkitProUpdate" "Build"
+  IntCmp ${BUILD} $R1 downloadINI downloadINI +1
+
+extractINI:
+
   ; extract built in ini file
   File "/oname=$EXEDIR\devkitProUpdate.ini" INIfiles\devkitProUpdate.ini
+  ReadINIStr $R1 "$EXEDIR\devkitProUpdate.ini" "devkitProUpdate" "Build"
 
-
+downloadINI:
   ; save the current ini file in case download fails
   Rename $EXEDIR\devkitProUpdate.ini $EXEDIR\devkitProUpdate.ini.old
 
@@ -602,7 +616,7 @@ gotINI:
   ; Read devkitProUpdate build info from INI file
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitProUpdate" "Build"
 
-  IntCmp ${BUILD} $R0 Finish newVersion +1
+  IntCmp $R1 $R0 Finish newVersion +1
 
     ; downloaded ini older than current
     Delete $EXEDIR\devkitProUpdate.ini
@@ -1034,6 +1048,12 @@ Function ExtractLib
 
   CreateDirectory "$INSTDIR\$FOLDER"
   untgz::extract -d "$INSTDIR/$FOLDER" -zbz2 "$EXEDIR/$LIB"
+
+  Pop $R0
+  StrCmp $R0 "success" succeeded
+  abort
+  goto SkipExtract
+succeeded:
 
   WriteINIStr $INSTDIR\installed.ini $R2 Version $R3
   push $LIB
