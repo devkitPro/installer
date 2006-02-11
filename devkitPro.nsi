@@ -1,5 +1,9 @@
-; $Id: devkitPro.nsi,v 1.27 2006-02-02 13:26:56 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.28 2006-02-11 23:21:59 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.27  2006/02/02 13:26:56  wntrmute
+; correct new version checking
+; correct path for lib extraction
+;
 ; Revision 1.26  2005/12/28 16:29:54  wntrmute
 ; added check for exisiting INI file
 ;
@@ -81,13 +85,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.2.6"
+!define PRODUCT_VERSION "1.2.7"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "18"
+!define BUILD "19"
 
 SetCompressor lzma
 
@@ -610,7 +614,7 @@ downloadINI:
 
   ; Quietly download the latest devkitProUpdate.ini file
   ;NSISdl::download_quiet "http://devkitpro.sourceforge.net/devkitProUpdate.ini" "$EXEDIR\devkitProUpdate.ini"
-  InetLoad::load  /SILENT "" "http://devkitpro.sourceforge.net/devkitProUpdate.ini" "$EXEDIR\devkitProUpdate.ini" /END
+  inetc::get  /SILENT "" "http://devkitpro.sourceforge.net/devkitProUpdate.ini" "$EXEDIR\devkitProUpdate.ini" /END
   pop $R0
 
   StrCmp $R0 "OK" gotINI
@@ -935,7 +939,7 @@ Function UpgradedevkitProUpdate
 
   DetailPrint "Downloading new version of devkitProUpdater..."
   ;NSISdl::download $R0/$R1 "$EXEDIR\$R1"
-  InetLoad::load /RESUME "" "$R0/$R1" "$EXEDIR\$R1" /END
+  inetc::get /RESUME "" "$R0/$R1" "$EXEDIR\$R1" /END
   Pop $0
   StrCmp $0 "OK" success
     ; Failure
@@ -996,7 +1000,7 @@ Function DownloadIfNeeded
   ifFileExists $EXEDIR\$R1 FileFound
 
   ;nsisdl::download $R0/$R1 $EXEDIR\$R1
-  InetLoad::load /RESUME "" "$R0/$R1" "$EXEDIR\$R1" /END
+  inetc::get /RESUME "" "$R0/$R1" "$EXEDIR\$R1" /END
   Pop $0
   StrCmp $0 "OK" FileFound
 
