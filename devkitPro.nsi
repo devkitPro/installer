@@ -1,5 +1,8 @@
-; $Id: devkitPro.nsi,v 1.28 2006-02-11 23:21:59 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.29 2006-05-18 00:57:39 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.28  2006/02/11 23:21:59  wntrmute
+; moved to inetc for better proxy support
+;
 ; Revision 1.27  2006/02/02 13:26:56  wntrmute
 ; correct new version checking
 ; correct path for lib extraction
@@ -83,15 +86,22 @@
 ; *** empty log message ***
 ;
 
+; plugins required
+; untgz     - http://nsis.sourceforge.net/wiki/UnTGZ
+; inetc     - http://nsis.sourceforge.net/Inetc_plug-in
+;             http://forums.winamp.com/showthread.php?s=&threadid=198596&perpage=40&highlight=&pagenumber=4
+;             http://forums.winamp.com/attachment.php?s=&postid=1831346
+; sfhelper  - http://nsis.sourceforge.net/SFhelper_Plugin
+
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.2.7"
+!define PRODUCT_VERSION "1.2.8"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "19"
+!define BUILD "20"
 
 SetCompressor lzma
 
@@ -175,7 +185,6 @@ InstallDir "c:\devkitPro"
 ShowInstDetails show
 ShowUnInstDetails show
 
-var MirrorName
 var MirrorHost
 var MirrorURL
 var Install
@@ -210,8 +219,9 @@ var INSIGHT
 var INSIGHT_VER
 
 var BASEDIR
-
 var Updates
+
+var CurrentMirror
 
 InstType "Full"
 InstType "devkitARM"
@@ -589,11 +599,28 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${Secinsight} "GUI debugger"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
-var INI
+var keepINI
+var mirrorINI
 
 ;-----------------------------------------------------------------------------------------------------------------------
 Function .onInit
 ;-----------------------------------------------------------------------------------------------------------------------
+  System::Call "kernel32::CreateMutexA(i 0, i 0, t '$(^Name)') i .r0 ?e"
+  Pop $0
+  StrCmp $0 0 launch
+  StrLen $0 "$(^Name)"
+  IntOp $0 $0 + 1
+loop:
+  FindWindow $1 '#32770' '' 0 $1
+  IntCmp $1 0 +4
+  System::Call "user32::GetWindowText(i r1, t .r2, i r0) i."
+  StrCmp $2 "$(^Name)" 0 loop
+  System::Call "user32::SetForegroundWindow(i r1) i."
+  System::Call "user32::ShowWindow(i r1,i 9) i."
+  Abort
+launch:
+
+
   ; test existing ini file version
   ; if lower than build then use built in ini
   ifFileExists $EXEDIR\devkitProUpdate.ini +1 extractINI
@@ -613,8 +640,8 @@ downloadINI:
 
 
   ; Quietly download the latest devkitProUpdate.ini file
-  ;NSISdl::download_quiet "http://devkitpro.sourceforge.net/devkitProUpdate.ini" "$EXEDIR\devkitProUpdate.ini"
-  inetc::get  /SILENT "" "http://devkitpro.sourceforge.net/devkitProUpdate.ini" "$EXEDIR\devkitProUpdate.ini" /END
+  inetc::get  /popup "downloading latest settings" "http://devkitpro.sourceforge.net/devkitProUpdate.ini" "$EXEDIR\devkitProUpdate.ini" /END
+
   pop $R0
 
   StrCmp $R0 "OK" gotINI
@@ -650,6 +677,10 @@ gotINI:
   StrCmp $1 "" installing
   
   StrCpy $INSTDIR $1
+
+  ; if the user has deleted installed.ini then revert to first install mode
+  ifFileExists $INSTDIR\installed.ini +1 installing
+
   StrCpy $Updating 1
 
   StrCpy $ChooseMessage "Choose the devkitPro components you would like to update."
@@ -735,10 +766,11 @@ installing:
   !insertmacro MUI_INSTALLOPTIONS_EXTRACT_AS "Dialogs\PickMirror.ini" "PickMirror.ini"
 
 
-  GetTempFileName $INI $PLUGINSDIR
-  File /oname=$INI "Dialogs\keepfiles.ini"
+  GetTempFileName $keepINI $PLUGINSDIR
+  File /oname=$keepINI "Dialogs\keepfiles.ini"
 
-  ;!insertmacro MUI_INSTALLOPTIONS_EXTRACT_AS "Dialogs\keepfiles.ini" "keepfiles.ini"
+  GetTempFileName $mirrorINI $PLUGINSDIR
+  File /oname=$mirrorINI "Dialogs\PickMirror.ini"
 
   IntCmp $Updating 1 +1 first_install
 
@@ -932,13 +964,14 @@ FunctionEnd
 
 
 ;-----------------------------------------------------------------------------------------------------------------------
+; Check for a newer version of the installer, download and ask the user if he wants to run it
+;-----------------------------------------------------------------------------------------------------------------------
 Function UpgradedevkitProUpdate
 ;-----------------------------------------------------------------------------------------------------------------------
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitProUpdate" "URL"
   ReadINIStr $R1 "$EXEDIR\devkitProUpdate.ini" "devkitProUpdate" "Filename"
 
   DetailPrint "Downloading new version of devkitProUpdater..."
-  ;NSISdl::download $R0/$R1 "$EXEDIR\$R1"
   inetc::get /RESUME "" "$R0/$R1" "$EXEDIR\$R1" /END
   Pop $0
   StrCmp $0 "OK" success
@@ -986,27 +1019,66 @@ TestInstall:
 ShowPage:
 FunctionEnd
 
+var URL
+var FileName
+var Section
+var MirrorList
+;-----------------------------------------------------------------------------------------------------------------------
+; check for the existence of a required archive and download from the selected mirror if necessary
 ;-----------------------------------------------------------------------------------------------------------------------
 Function DownloadIfNeeded
 ;-----------------------------------------------------------------------------------------------------------------------
-  pop $R0  ; URL
-  pop $R1  ; Filename
-  pop $R3  ; section flags
+  pop $URL  ; URL
+  pop $FileName  ; Filename
+  pop $Section  ; section flags
 
-  SectionGetFlags $R3 $0
+
+  SectionGetFlags $Section $0
   IntOp $0 $0 & ${SF_SELECTED}
   IntCmp $0 ${SF_SELECTED} +1 SkipDL
 
-  ifFileExists $EXEDIR\$R1 FileFound
 
-  ;nsisdl::download $R0/$R1 $EXEDIR\$R1
-  inetc::get /RESUME "" "$R0/$R1" "$EXEDIR\$R1" /END
+  ifFileExists $EXEDIR\$FileName FileFound
+
+
+downloadFile:
+  inetc::get /RESUME "" "$MirrorURL/$FileName" "$EXEDIR\$FileName" /END
   Pop $0
   StrCmp $0 "OK" FileFound
 
-  Abort "Could not download $R1!"
-SkipDL:
+  StrCmp $0 "File Not Found (404)" nextmirror
+  detailprint $0
+  Abort "Could not download $MirrorURL/$FileName!"
+
 FileFound:
+  sfhelper::checkFile $EXEDIR\$FileName
+  pop $0
+  StrCmp $0 "OK" downloadOK
+
+;parsemirror:
+  sfhelper::getMirrors $EXEDIR\$FileName
+  pop $0
+
+  ${StrTok} $MirrorHost $0 "|" 0 0
+  StrCpy $CurrentMirror 0
+  goto selectmirror
+
+nextmirror:
+  Intop $CurrentMirror $CurrentMirror + 1
+
+  ${StrTok} $MirrorHost $MirrorList "|" $CurrentMirror 0
+  StrCmp $MirrorHost "" +1 selectmirror
+
+  StrCpy $MirrorHost "osdn"
+
+selectmirror:
+  StrCpy $MirrorURL "http://$MirrorHost.dl.sourceforge.net/sourceforge/devkitpro"
+  Delete $EXEDIR\$FileName
+  goto downloadFile
+
+downloadOK:
+SkipDL:
+
 FunctionEnd
 
 var LIB
@@ -1088,22 +1160,23 @@ Function KeepFilesPage
 
   IntCmp $Updating 1 +1 defaultkeep
 
-  WriteINIStr $INI "Field 3" "State" 0
-  WriteINIStr $INI "Field 2" "State" 1
-  FlushINI $INI
+  WriteINIStr $keepINI "Field 3" "State" 0
+  WriteINIStr $keepINI "Field 2" "State" 1
+  FlushINI $keepINI
 
 defaultkeep:
 
-  InstallOptions::initDialog /NOUNLOAD "$INI"
+  InstallOptions::initDialog /NOUNLOAD "$keepINI"
   InstallOptions::show
 
-  ReadINIStr $keepfiles $INI "Field 3" "State"
+  ReadINIStr $keepfiles $keepINI "Field 3" "State"
 
 nodisplay:
 FunctionEnd
 
-var filename
 
+;-----------------------------------------------------------------------------------------------------------------------
+; delete an archive unless the user has elected to keep downloaded files
 ;-----------------------------------------------------------------------------------------------------------------------
 Function RemoveFile
 ;-----------------------------------------------------------------------------------------------------------------------
@@ -1117,29 +1190,31 @@ keepit:
 FunctionEnd
 
 ;-----------------------------------------------------------------------------------------------------------------------
-; faking an array using separators
-;-----------------------------------------------------------------------------------------------------------------------
-!define hosts "jaist|keihanna|nchc|puzzle|heanet|mesh|kent|switch|citkit|ovh|peterhost|internap|umn|easynews|ufpr"
-;-----------------------------------------------------------------------------------------------------------------------
 Function ChooseMirrorPage
 ;-----------------------------------------------------------------------------------------------------------------------
+  ; obtain list of mirrors from sourceforge by page scraping
+  inetc::get  "http://prdownloads.sourceforge.net/devkitpro/${PRODUCT_NAME}-${PRODUCT_VERSION}.exe?download" "$EXEDIR\mirrorlist.html" /END
+  sfhelper::getMirrors $EXEDIR\mirrorlist.html
+  pop $MirrorList
+
+  ; select first mirror in the list
+  ${StrTok} $MirrorHost $MirrorList "|" 0 0
+  strcmp $MirrorHost "" +1 mirrorOK
+  strcpy  $MirrorHost "osdn"
+mirrorOK:
+  StrCpy $MirrorURL "http://$MirrorHost.dl.sourceforge.net/sourceforge/devkitpro"
+  StrCpy $CurrentMirror 0
+
   IntCmp $Updating 1 update +1
 
+  WriteINIStr $mirrorINI "Field 4" "Text" "Using sourceforge mirror - $MirrorHost.dl.sourceforge.net."
+  FlushINI $mirrorINI
 
-  ; Display the page.
-  !insertmacro MUI_INSTALLOPTIONS_DISPLAY "PickMirror.ini"
-  ; Get the user entered values.
-  !insertmacro MUI_INSTALLOPTIONS_READ $MirrorName "PickMirror.ini" "Field 4" "State"
-  !insertmacro MUI_INSTALLOPTIONS_READ $Install "PickMirror.ini" "Field 2" "State"
+  InstallOptions::initDialog /NOUNLOAD "$mirrorINI"
+  InstallOptions::show
 
-  ; first two digits of the field are an array index
-  StrCpy $0 $MirrorName 2
-  IntOp $0 $0 - 1
-  
-  ${StrTok} $MirrorHost ${hosts} "|" $0 0
-  StrCpy $MirrorURL "http://$MirrorHost.dl.sourceforge.net/sourceforge"
-
-  IntCmp $Install 1 install +1 +1
+  ReadINIStr $Install $mirrorINI "Field 2" "State"
+  IntCmp $Install 1 install +1
 
   StrCpy $INSTALL_ACTION "Please wait while ${PRODUCT_NAME} downloads the components you selected."
   StrCpy $FINISH_TITLE "Download complete."
