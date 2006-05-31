@@ -1,5 +1,8 @@
-; $Id: devkitPro.nsi,v 1.29 2006-05-18 00:57:39 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.30 2006-05-31 04:51:22 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.29  2006/05/18 00:57:39  wntrmute
+; Changed to automatic mirror selection
+;
 ; Revision 1.28  2006/02/11 23:21:59  wntrmute
 ; moved to inetc for better proxy support
 ;
@@ -95,13 +98,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.2.8"
+!define PRODUCT_VERSION "1.2.9"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "20"
+!define BUILD "21"
 
 SetCompressor lzma
 
@@ -1040,11 +1043,11 @@ Function DownloadIfNeeded
 
   ifFileExists $EXEDIR\$FileName FileFound
 
-
 downloadFile:
   inetc::get /RESUME "" "$MirrorURL/$FileName" "$EXEDIR\$FileName" /END
   Pop $0
   StrCmp $0 "OK" FileFound
+
 
   StrCmp $0 "File Not Found (404)" nextmirror
   detailprint $0
@@ -1055,21 +1058,26 @@ FileFound:
   pop $0
   StrCmp $0 "OK" downloadOK
 
-;parsemirror:
   sfhelper::getMirrors $EXEDIR\$FileName
-  pop $0
+  pop $MirrorList
 
-  ${StrTok} $MirrorHost $0 "|" 0 0
   StrCpy $CurrentMirror 0
-  goto selectmirror
+  goto pickmirror
 
 nextmirror:
   Intop $CurrentMirror $CurrentMirror + 1
 
+pickmirror:
   ${StrTok} $MirrorHost $MirrorList "|" $CurrentMirror 0
   StrCmp $MirrorHost "" +1 selectmirror
 
-  StrCpy $MirrorHost "osdn"
+  ; run out of mirrors, start again
+  inetc::get  "http://prdownloads.sourceforge.net/devkitpro/$FileName" "$EXEDIR\mirrorlist.html" /END
+  sfhelper::getMirrors $EXEDIR\mirrorlist.html
+
+  StrCpy $CurrentMirror 0
+  goto pickmirror
+
 
 selectmirror:
   StrCpy $MirrorURL "http://$MirrorHost.dl.sourceforge.net/sourceforge/devkitpro"
