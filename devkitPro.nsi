@@ -1,5 +1,8 @@
-; $Id: devkitPro.nsi,v 1.30 2006-05-31 04:51:22 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.31 2006-05-31 20:08:39 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.30  2006/05/31 04:51:22  wntrmute
+; added further mirror fallbacks
+;
 ; Revision 1.29  2006/05/18 00:57:39  wntrmute
 ; Changed to automatic mirror selection
 ;
@@ -98,7 +101,7 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.2.9"
+!define PRODUCT_VERSION "1.3.0"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
