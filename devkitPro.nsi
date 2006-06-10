@@ -1,5 +1,8 @@
-; $Id: devkitPro.nsi,v 1.31 2006-05-31 20:08:39 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.32 2006-06-10 14:53:53 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.31  2006/05/31 20:08:39  wntrmute
+; bump version number
+;
 ; Revision 1.30  2006/05/31 04:51:22  wntrmute
 ; added further mirror fallbacks
 ;
@@ -101,13 +104,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.3.0"
+!define PRODUCT_VERSION "1.3.1"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "21"
+!define BUILD "22"
 
 SetCompressor lzma
 
@@ -1076,7 +1079,10 @@ pickmirror:
 
   ; run out of mirrors, start again
   inetc::get  "http://prdownloads.sourceforge.net/devkitpro/$FileName" "$EXEDIR\mirrorlist.html" /END
+  pop $0
+
   sfhelper::getMirrors $EXEDIR\mirrorlist.html
+  pop $MirrorList
 
   StrCpy $CurrentMirror 0
   goto pickmirror
