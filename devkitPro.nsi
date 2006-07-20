@@ -1,5 +1,8 @@
-; $Id: devkitPro.nsi,v 1.32 2006-06-10 14:53:53 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.33 2006-07-20 00:02:08 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.32  2006/06/10 14:53:53  wntrmute
+; correct mirror selection in downloadifneeded
+;
 ; Revision 1.31  2006/05/31 20:08:39  wntrmute
 ; bump version number
 ;
@@ -104,13 +107,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.3.1"
+!define PRODUCT_VERSION "1.3.4"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "22"
+!define BUILD "25"
 
 SetCompressor lzma
 
@@ -204,8 +207,12 @@ var DEVKITARM
 var DEVKITARM_VER
 var LIBGBA
 var LIBGBA_VER
+var LIBGBA_FAT
+var LIBGBA_FAT_VER
 var LIBNDS
 var LIBNDS_VER
+var LIBNDS_FAT
+var LIBNDS_FAT_VER
 var NDSEXAMPLES
 var NDSEXAMPLES_VER
 var GBAEXAMPLES
@@ -251,11 +258,19 @@ SectionGroup devkitARM SecdevkitARM
           SectionIn 1 2
         SectionEnd
 
+	Section "libfat-gba" Seclibgbafat
+          SectionIn 1 2
+	SectionEnd
+
 	Section "libmirko" Seclibmirko
           SectionIn 1 2
 	SectionEnd
 
 	Section "libnds" Seclibnds
+          SectionIn 1 2
+	SectionEnd
+
+	Section "libfat-nds" Seclibndsfat
           SectionIn 1 2
 	SectionEnd
 
@@ -326,8 +341,18 @@ Section -installComponents
   push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
+  push ${Seclibgbafat}
+  push $LIBGBA_FAT
+  push $MirrorURL/devkitpro
+  Call DownloadIfNeeded
+
   push ${Seclibnds}
   push $LIBNDS
+  push $MirrorURL/devkitpro
+  Call DownloadIfNeeded
+
+  push ${Seclibndsfat}
+  push $LIBNDS_FAT
   push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
@@ -431,11 +456,25 @@ SkipMsys:
   push $LIBGBA_VER
   call ExtractLib
   
+  push ${Seclibgbafat}
+  push "libgba"
+  push $LIBGBA_FAT
+  push "libgbafat"
+  push $LIBGBA_FAT_VER
+  call ExtractLib
+
   push ${Seclibnds}
   push "libnds"
   push $LIBNDS
   push "libnds"
   push $LIBNDS_VER
+  call ExtractLib
+
+  push ${Seclibndsfat}
+  push "libnds"
+  push $LIBNDS_FAT
+  push "libndsfat"
+  push $LIBNDS_FAT_VER
   call ExtractLib
 
   push ${Seclibmirko}
@@ -599,8 +638,10 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${pspdoc} "PSP SDK documentation"
   !insertmacro MUI_DESCRIPTION_TEXT ${Pnotepad} "a programmer's editor"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibgba} "Nintendo GBA development library"
+  !insertmacro MUI_DESCRIPTION_TEXT ${Seclibgbafat} "Nintendo GBA FAT library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibmirko} "Gamepark GP32 development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibnds} "Nintendo DS development library"
+  !insertmacro MUI_DESCRIPTION_TEXT ${Seclibndsfat} "Nintendo DS FAT library"
   !insertmacro MUI_DESCRIPTION_TEXT ${ndsexamples} "Nintendo DS example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${gbaexamples} "Nintendo GBA example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${gp32examples} "Gamepark GP32 example code"
@@ -647,9 +688,8 @@ downloadINI:
   ; save the current ini file in case download fails
   Rename $EXEDIR\devkitProUpdate.ini $EXEDIR\devkitProUpdate.ini.old
 
-
   ; Quietly download the latest devkitProUpdate.ini file
-  inetc::get  /popup "downloading latest settings" "http://devkitpro.sourceforge.net/devkitProUpdate.ini" "$EXEDIR\devkitProUpdate.ini" /END
+  inetc::get  "http://devkitpro.sourceforge.net/devkitProUpdate.ini" "$EXEDIR\devkitProUpdate.ini" /END
 
   pop $R0
 
@@ -717,10 +757,21 @@ installing:
   ReadINIStr $LIBGBA_VER "$EXEDIR\devkitProUpdate.ini" "libgba" "Version"
   SectionSetSize ${Seclibgba} $R0
 
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libgbafat" "Size"
+  ReadINIStr $LIBGBA_FAT "$EXEDIR\devkitProUpdate.ini" "libgbafat" "File"
+  ReadINIStr $LIBGBA_FAT_VER "$EXEDIR\devkitProUpdate.ini" "libgbafat" "Version"
+  SectionSetSize ${Seclibgbafat} $R0
+
+
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libnds" "Size"
   ReadINIStr $LIBNDS "$EXEDIR\devkitProUpdate.ini" "libnds" "File"
   ReadINIStr $LIBNDS_VER "$EXEDIR\devkitProUpdate.ini" "libnds" "Version"
   SectionSetSize ${Seclibnds} $R0
+
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libndsfat" "Size"
+  ReadINIStr $LIBNDS_FAT "$EXEDIR\devkitProUpdate.ini" "libndsfat" "File"
+  ReadINIStr $LIBNDS_FAT_VER "$EXEDIR\devkitProUpdate.ini" "libndsfat" "Version"
+  SectionSetSize ${Seclibndsfat} $R0
 
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libmirko" "Size"
   ReadINIStr $LIBMIRKO "$EXEDIR\devkitProUpdate.ini" "libmirko" "File"
@@ -811,11 +862,25 @@ installing:
   push ${Seclibgba}
   call checkVersion
 
+  ReadINIStr $0 "$INSTDIR\installed.ini" "libgbafat" "Version"
+
+  push $0
+  push $LIBGBA_FAT_VER
+  push ${Seclibgbafat}
+  call checkVersion
+
   ReadINIStr $0 "$INSTDIR\installed.ini" "libnds" "Version"
 
   push $0
   push $LIBNDS_VER
   push ${Seclibnds}
+  call checkVersion
+
+  ReadINIStr $0 "$INSTDIR\installed.ini" "libndsfat" "Version"
+
+  push $0
+  push $LIBNDS_FAT_VER
+  push ${Seclibndsfat}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "ndsexamples" "Version"
@@ -1047,7 +1112,7 @@ Function DownloadIfNeeded
   IntCmp $0 ${SF_SELECTED} +1 SkipDL
 
 
-  ifFileExists $EXEDIR\$FileName FileFound
+  ifFileExists "$EXEDIR\$FileName" FileFound
 
 downloadFile:
   inetc::get /RESUME "" "$MirrorURL/$FileName" "$EXEDIR\$FileName" /END
@@ -1060,12 +1125,15 @@ downloadFile:
   Abort "Could not download $MirrorURL/$FileName!"
 
 FileFound:
-  sfhelper::checkFile $EXEDIR\$FileName
+
+  sfhelper::checkFile "$EXEDIR\$FileName"
   pop $0
   StrCmp $0 "OK" downloadOK
 
-  sfhelper::getMirrors $EXEDIR\$FileName
+  sfhelper::getMirrors "$EXEDIR\$FileName"
   pop $MirrorList
+  
+  delete "$EXEDIR\$FileName"
 
   StrCpy $CurrentMirror 0
   goto pickmirror
@@ -1077,15 +1145,22 @@ pickmirror:
   ${StrTok} $MirrorHost $MirrorList "|" $CurrentMirror 0
   StrCmp $MirrorHost "" +1 selectmirror
 
+  IntCmp $CurrentMirror 0 nofile
+
+  delete "$EXEDIR\mirrorlist.html"
+  
   ; run out of mirrors, start again
   inetc::get  "http://prdownloads.sourceforge.net/devkitpro/$FileName" "$EXEDIR\mirrorlist.html" /END
   pop $0
 
-  sfhelper::getMirrors $EXEDIR\mirrorlist.html
+  sfhelper::getMirrors "$EXEDIR\mirrorlist.html"
   pop $MirrorList
 
   StrCpy $CurrentMirror 0
   goto pickmirror
+
+nofile:
+  Abort "no mirrors contain $FileName!"
 
 
 selectmirror:
@@ -1186,7 +1261,7 @@ defaultkeep:
   InstallOptions::initDialog /NOUNLOAD "$keepINI"
   InstallOptions::show
 
-  ReadINIStr $keepfiles $keepINI "Field 3" "State"
+  ReadINIStr $keepfiles "$keepINI" "Field 3" "State"
 
 nodisplay:
 FunctionEnd
@@ -1200,7 +1275,7 @@ Function RemoveFile
   pop $filename
   IntCmp $keepfiles 1 keepit
 
-  Delete $EXEDIR\$filename
+  Delete "$EXEDIR\$filename"
 
 keepit:
 
@@ -1211,7 +1286,7 @@ Function ChooseMirrorPage
 ;-----------------------------------------------------------------------------------------------------------------------
   ; obtain list of mirrors from sourceforge by page scraping
   inetc::get  "http://prdownloads.sourceforge.net/devkitpro/${PRODUCT_NAME}-${PRODUCT_VERSION}.exe?download" "$EXEDIR\mirrorlist.html" /END
-  sfhelper::getMirrors $EXEDIR\mirrorlist.html
+  sfhelper::getMirrors "$EXEDIR\mirrorlist.html"
   pop $MirrorList
 
   ; select first mirror in the list
@@ -1230,7 +1305,7 @@ mirrorOK:
   InstallOptions::initDialog /NOUNLOAD "$mirrorINI"
   InstallOptions::show
 
-  ReadINIStr $Install $mirrorINI "Field 2" "State"
+  ReadINIStr $Install "$mirrorINI" "Field 2" "State"
   IntCmp $Install 1 install +1
 
   StrCpy $INSTALL_ACTION "Please wait while ${PRODUCT_NAME} downloads the components you selected."
