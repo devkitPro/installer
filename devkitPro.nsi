@@ -1,5 +1,9 @@
-; $Id: devkitPro.nsi,v 1.33 2006-07-20 00:02:08 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.34 2006-08-01 11:08:42 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.33  2006/07/20 00:02:08  wntrmute
+; add libfat
+; bump version numbers
+;
 ; Revision 1.32  2006/06/10 14:53:53  wntrmute
 ; correct mirror selection in downloadifneeded
 ;
@@ -107,13 +111,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.3.4"
+!define PRODUCT_VERSION "1.3.5"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "25"
+!define BUILD "26"
 
 SetCompressor lzma
 
@@ -211,6 +215,8 @@ var LIBGBA_FAT
 var LIBGBA_FAT_VER
 var LIBNDS
 var LIBNDS_VER
+var DSWIFI
+var DSWIFI_VER
 var LIBNDS_FAT
 var LIBNDS_FAT_VER
 var NDSEXAMPLES
@@ -271,6 +277,10 @@ SectionGroup devkitARM SecdevkitARM
 	SectionEnd
 
 	Section "libfat-nds" Seclibndsfat
+          SectionIn 1 2
+	SectionEnd
+
+	Section "dswifi lib" Secdswifi
           SectionIn 1 2
 	SectionEnd
 
@@ -348,6 +358,11 @@ Section -installComponents
 
   push ${Seclibnds}
   push $LIBNDS
+  push $MirrorURL/devkitpro
+  Call DownloadIfNeeded
+
+  push ${Secdswifi}
+  push $DSWIFI
   push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
@@ -475,6 +490,13 @@ SkipMsys:
   push $LIBNDS_FAT
   push "libndsfat"
   push $LIBNDS_FAT_VER
+  call ExtractLib
+
+  push ${Secdswifi}
+  push "libnds"
+  push $DSWIFI
+  push "dswifi"
+  push $DSWIFI_VER
   call ExtractLib
 
   push ${Seclibmirko}
@@ -641,6 +663,7 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibgbafat} "Nintendo GBA FAT library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibmirko} "Gamepark GP32 development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibnds} "Nintendo DS development library"
+  !insertmacro MUI_DESCRIPTION_TEXT ${Secdswifi} "Nintendo DS wifi library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibndsfat} "Nintendo DS FAT library"
   !insertmacro MUI_DESCRIPTION_TEXT ${ndsexamples} "Nintendo DS example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${gbaexamples} "Nintendo GBA example code"
@@ -773,6 +796,11 @@ installing:
   ReadINIStr $LIBNDS_FAT_VER "$EXEDIR\devkitProUpdate.ini" "libndsfat" "Version"
   SectionSetSize ${Seclibndsfat} $R0
 
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "dswifi" "Size"
+  ReadINIStr $DSWIFI "$EXEDIR\devkitProUpdate.ini" "dswifi" "File"
+  ReadINIStr $DSWIFI_VER "$EXEDIR\devkitProUpdate.ini" "dswifi" "Version"
+  SectionSetSize ${Secdswifi} $R0
+
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libmirko" "Size"
   ReadINIStr $LIBMIRKO "$EXEDIR\devkitProUpdate.ini" "libmirko" "File"
   ReadINIStr $LIBMIRKO_VER "$EXEDIR\devkitProUpdate.ini" "libmirko" "Version"
@@ -874,6 +902,13 @@ installing:
   push $0
   push $LIBNDS_VER
   push ${Seclibnds}
+  call checkVersion
+
+  ReadINIStr $0 "$INSTDIR\installed.ini" "dswifi" "Version"
+
+  push $0
+  push $DSWIFI_VER
+  push ${Secdswifi}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "libndsfat" "Version"
