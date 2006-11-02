@@ -1,5 +1,8 @@
-; $Id: devkitPro.nsi,v 1.34 2006-08-01 11:08:42 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.35 2006-11-02 08:54:53 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.34  2006/08/01 11:08:42  wntrmute
+; add dswifi to the installer
+;
 ; Revision 1.33  2006/07/20 00:02:08  wntrmute
 ; add libfat
 ; bump version numbers
@@ -111,13 +114,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.3.5"
+!define PRODUCT_VERSION "1.3.6"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "26"
+!define BUILD "27"
 
 SetCompressor lzma
 
