@@ -1,5 +1,9 @@
-; $Id: devkitPro.nsi,v 1.35 2006-11-02 08:54:53 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.36 2006-11-21 08:32:23 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.35  2006/11/02 08:54:53  wntrmute
+; bump version number
+; add latest dswifi version
+;
 ; Revision 1.34  2006/08/01 11:08:42  wntrmute
 ; add dswifi to the installer
 ;
@@ -114,13 +118,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.3.6"
+!define PRODUCT_VERSION "1.4.0"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "27"
+!define BUILD "28"
 
 SetCompressor lzma
 
@@ -1135,10 +1139,38 @@ var URL
 var FileName
 var Section
 var MirrorList
+
+;-----------------------------------------------------------------------------------------------------------------------
+Function DownloadIfNeeded
+;-----------------------------------------------------------------------------------------------------------------------
+  pop $URL  ; URL
+  pop $FileName  ; Filename
+  pop $Section  ; section flags
+
+
+  SectionGetFlags $Section $0
+  IntOp $0 $0 & ${SF_SELECTED}
+  IntCmp $0 ${SF_SELECTED} +1 SkipThisDL
+
+
+  ifFileExists "$EXEDIR\$FileName" ThisFileFound
+
+  inetc::get /RESUME "" "http://downloads.sourceforge.net/devkitpro/$FileName" "$EXEDIR\$FileName" /END
+  Pop $0
+  StrCmp $0 "OK" ThisFileFound
+
+  detailprint $0
+  abort "oh ffs"
+
+ThisFileFound:
+SkipThisDL:
+
+FunctionEnd
+
 ;-----------------------------------------------------------------------------------------------------------------------
 ; check for the existence of a required archive and download from the selected mirror if necessary
 ;-----------------------------------------------------------------------------------------------------------------------
-Function DownloadIfNeeded
+Function OldDownloadIfNeeded
 ;-----------------------------------------------------------------------------------------------------------------------
   pop $URL  ; URL
   pop $FileName  ; Filename
@@ -1188,7 +1220,7 @@ pickmirror:
   delete "$EXEDIR\mirrorlist.html"
   
   ; run out of mirrors, start again
-  inetc::get  "http://prdownloads.sourceforge.net/devkitpro/$FileName" "$EXEDIR\mirrorlist.html" /END
+  inetc::get  "http://prdownloads.sourceforge.net/devkitpro/$FileName?download" "$EXEDIR\mirrorlist.html" /END
   pop $0
 
   sfhelper::getMirrors "$EXEDIR\mirrorlist.html"
@@ -1323,17 +1355,17 @@ FunctionEnd
 Function ChooseMirrorPage
 ;-----------------------------------------------------------------------------------------------------------------------
   ; obtain list of mirrors from sourceforge by page scraping
-  inetc::get  "http://prdownloads.sourceforge.net/devkitpro/${PRODUCT_NAME}-${PRODUCT_VERSION}.exe?download" "$EXEDIR\mirrorlist.html" /END
-  sfhelper::getMirrors "$EXEDIR\mirrorlist.html"
-  pop $MirrorList
+  ;inetc::get  "http://prdownloads.sourceforge.net/devkitpro/${PRODUCT_NAME}-${PRODUCT_VERSION}.exe?download" "$EXEDIR\mirrorlist.html" /END
+  ;sfhelper::getMirrors "$EXEDIR\mirrorlist.html"
+  ;pop $MirrorList
 
   ; select first mirror in the list
-  ${StrTok} $MirrorHost $MirrorList "|" 0 0
-  strcmp $MirrorHost "" +1 mirrorOK
-  strcpy  $MirrorHost "osdn"
-mirrorOK:
-  StrCpy $MirrorURL "http://$MirrorHost.dl.sourceforge.net/sourceforge/devkitpro"
-  StrCpy $CurrentMirror 0
+  ;${StrTok} $MirrorHost $MirrorList "|" 0 0
+  ;strcmp $MirrorHost "" +1 mirrorOK
+  ;strcpy  $MirrorHost "osdn"
+;mirrorOK:
+  ;StrCpy $MirrorURL "http://$MirrorHost.dl.sourceforge.net/sourceforge/devkitpro"
+  ;StrCpy $CurrentMirror 0
 
   IntCmp $Updating 1 update +1
 
