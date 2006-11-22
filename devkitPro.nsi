@@ -1,5 +1,8 @@
-; $Id: devkitPro.nsi,v 1.36 2006-11-21 08:32:23 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.37 2006-11-22 06:54:24 wntrmute Exp $
 ; $Log: not supported by cvs2svn $
+; Revision 1.36  2006/11/21 08:32:23  wntrmute
+; updated for new SF mirror system
+;
 ; Revision 1.35  2006/11/02 08:54:53  wntrmute
 ; bump version number
 ; add latest dswifi version
@@ -114,17 +117,16 @@
 ; inetc     - http://nsis.sourceforge.net/Inetc_plug-in
 ;             http://forums.winamp.com/showthread.php?s=&threadid=198596&perpage=40&highlight=&pagenumber=4
 ;             http://forums.winamp.com/attachment.php?s=&postid=1831346
-; sfhelper  - http://nsis.sourceforge.net/SFhelper_Plugin
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.4.0"
+!define PRODUCT_VERSION "1.4.1"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "28"
+!define BUILD "29"
 
 SetCompressor lzma
 
@@ -208,8 +210,6 @@ InstallDir "c:\devkitPro"
 ShowInstDetails show
 ShowUnInstDetails show
 
-var MirrorHost
-var MirrorURL
 var Install
 var Updating
 var MSYS
@@ -249,8 +249,6 @@ var INSIGHT_VER
 
 var BASEDIR
 var Updates
-
-var CurrentMirror
 
 InstType "Full"
 InstType "devkitARM"
@@ -345,87 +343,70 @@ Section -installComponents
 
   push ${SecMsys}
   push $MSYS
-  push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
   push ${SecdkARM}
   push $DEVKITARM
-  push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
   push ${Seclibgba}
   push $LIBGBA
-  push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
   push ${Seclibgbafat}
   push $LIBGBA_FAT
-  push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
   push ${Seclibnds}
   push $LIBNDS
-  push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
   push ${Secdswifi}
   push $DSWIFI
-  push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
   push ${Seclibndsfat}
   push $LIBNDS_FAT
-  push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
   push ${Seclibmirko}
   push $LIBMIRKO
-  push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
   push ${ndsexamples}
   push $NDSEXAMPLES
-  push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
   push ${gbaexamples}
   push $GBAEXAMPLES
-  push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
   push ${gp32examples}
   push $GP32EXAMPLES
-  push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
   push ${SecdevkitPPC}
   push $DEVKITPPC
-  push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
   push ${cubeexamples}
   push $CUBEEXAMPLES
-  push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
   push ${SecdevkitPSP}
   push $DEVKITPSP
-  push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
   push ${pspdoc}
   push $PSPDOC
-  push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
   push ${pnotepad}
   push $PNOTEPAD
-  push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
   push ${Secinsight}
   push $INSIGHT
-  push $MirrorURL/devkitpro
   Call DownloadIfNeeded
 
   IntCmp $Install 1 +1 SkipInstall SkipInstall
@@ -435,7 +416,6 @@ Section -installComponents
   CreateDirectory $INSTDIR
   File /oname=$INSTDIR\installed.ini INIfiles\installed.ini
 
-  WriteINIStr $INSTDIR\installed.ini mirror url $MirrorURL
 
 test_Msys:
   !insertmacro SectionFlagIsSet ${SecMsys} ${SF_SELECTED} install_Msys SkipMsys
@@ -869,7 +849,7 @@ installing:
 
   IntCmp $Updating 1 +1 first_install
 
-  ReadINIStr $MirrorURL "$INSTDIR\installed.ini" "mirror" "url"
+  ;ReadINIStr $MirrorURL "$INSTDIR\installed.ini" "mirror" "url"
 
   StrCpy $Updates 0
 
@@ -1135,15 +1115,12 @@ TestInstall:
 ShowPage:
 FunctionEnd
 
-var URL
 var FileName
 var Section
-var MirrorList
 
 ;-----------------------------------------------------------------------------------------------------------------------
 Function DownloadIfNeeded
 ;-----------------------------------------------------------------------------------------------------------------------
-  pop $URL  ; URL
   pop $FileName  ; Filename
   pop $Section  ; section flags
 
@@ -1167,81 +1144,6 @@ SkipThisDL:
 
 FunctionEnd
 
-;-----------------------------------------------------------------------------------------------------------------------
-; check for the existence of a required archive and download from the selected mirror if necessary
-;-----------------------------------------------------------------------------------------------------------------------
-Function OldDownloadIfNeeded
-;-----------------------------------------------------------------------------------------------------------------------
-  pop $URL  ; URL
-  pop $FileName  ; Filename
-  pop $Section  ; section flags
-
-
-  SectionGetFlags $Section $0
-  IntOp $0 $0 & ${SF_SELECTED}
-  IntCmp $0 ${SF_SELECTED} +1 SkipDL
-
-
-  ifFileExists "$EXEDIR\$FileName" FileFound
-
-downloadFile:
-  inetc::get /RESUME "" "$MirrorURL/$FileName" "$EXEDIR\$FileName" /END
-  Pop $0
-  StrCmp $0 "OK" FileFound
-
-
-  StrCmp $0 "File Not Found (404)" nextmirror
-  detailprint $0
-  Abort "Could not download $MirrorURL/$FileName!"
-
-FileFound:
-
-  sfhelper::checkFile "$EXEDIR\$FileName"
-  pop $0
-  StrCmp $0 "OK" downloadOK
-
-  sfhelper::getMirrors "$EXEDIR\$FileName"
-  pop $MirrorList
-  
-  delete "$EXEDIR\$FileName"
-
-  StrCpy $CurrentMirror 0
-  goto pickmirror
-
-nextmirror:
-  Intop $CurrentMirror $CurrentMirror + 1
-
-pickmirror:
-  ${StrTok} $MirrorHost $MirrorList "|" $CurrentMirror 0
-  StrCmp $MirrorHost "" +1 selectmirror
-
-  IntCmp $CurrentMirror 0 nofile
-
-  delete "$EXEDIR\mirrorlist.html"
-  
-  ; run out of mirrors, start again
-  inetc::get  "http://prdownloads.sourceforge.net/devkitpro/$FileName?download" "$EXEDIR\mirrorlist.html" /END
-  pop $0
-
-  sfhelper::getMirrors "$EXEDIR\mirrorlist.html"
-  pop $MirrorList
-
-  StrCpy $CurrentMirror 0
-  goto pickmirror
-
-nofile:
-  Abort "no mirrors contain $FileName!"
-
-
-selectmirror:
-  StrCpy $MirrorURL "http://$MirrorHost.dl.sourceforge.net/sourceforge/devkitpro"
-  Delete $EXEDIR\$FileName
-  goto downloadFile
-
-downloadOK:
-SkipDL:
-
-FunctionEnd
 
 var LIB
 var FOLDER
@@ -1354,23 +1256,7 @@ FunctionEnd
 ;-----------------------------------------------------------------------------------------------------------------------
 Function ChooseMirrorPage
 ;-----------------------------------------------------------------------------------------------------------------------
-  ; obtain list of mirrors from sourceforge by page scraping
-  ;inetc::get  "http://prdownloads.sourceforge.net/devkitpro/${PRODUCT_NAME}-${PRODUCT_VERSION}.exe?download" "$EXEDIR\mirrorlist.html" /END
-  ;sfhelper::getMirrors "$EXEDIR\mirrorlist.html"
-  ;pop $MirrorList
-
-  ; select first mirror in the list
-  ;${StrTok} $MirrorHost $MirrorList "|" 0 0
-  ;strcmp $MirrorHost "" +1 mirrorOK
-  ;strcpy  $MirrorHost "osdn"
-;mirrorOK:
-  ;StrCpy $MirrorURL "http://$MirrorHost.dl.sourceforge.net/sourceforge/devkitpro"
-  ;StrCpy $CurrentMirror 0
-
   IntCmp $Updating 1 update +1
-
-  WriteINIStr $mirrorINI "Field 4" "Text" "Using sourceforge mirror - $MirrorHost.dl.sourceforge.net."
-  FlushINI $mirrorINI
 
   InstallOptions::initDialog /NOUNLOAD "$mirrorINI"
   InstallOptions::show
