@@ -1,116 +1,4 @@
-; $Id: devkitPro.nsi,v 1.37 2006-11-22 06:54:24 wntrmute Exp $
-; $Log: not supported by cvs2svn $
-; Revision 1.36  2006/11/21 08:32:23  wntrmute
-; updated for new SF mirror system
-;
-; Revision 1.35  2006/11/02 08:54:53  wntrmute
-; bump version number
-; add latest dswifi version
-;
-; Revision 1.34  2006/08/01 11:08:42  wntrmute
-; add dswifi to the installer
-;
-; Revision 1.33  2006/07/20 00:02:08  wntrmute
-; add libfat
-; bump version numbers
-;
-; Revision 1.32  2006/06/10 14:53:53  wntrmute
-; correct mirror selection in downloadifneeded
-;
-; Revision 1.31  2006/05/31 20:08:39  wntrmute
-; bump version number
-;
-; Revision 1.30  2006/05/31 04:51:22  wntrmute
-; added further mirror fallbacks
-;
-; Revision 1.29  2006/05/18 00:57:39  wntrmute
-; Changed to automatic mirror selection
-;
-; Revision 1.28  2006/02/11 23:21:59  wntrmute
-; moved to inetc for better proxy support
-;
-; Revision 1.27  2006/02/02 13:26:56  wntrmute
-; correct new version checking
-; correct path for lib extraction
-;
-; Revision 1.26  2005/12/28 16:29:54  wntrmute
-; added check for exisiting INI file
-;
-; Revision 1.25  2005/12/28 08:45:55  wntrmute
-; fixed PATH error
-; updated INI file for latest files
-;
-; Revision 1.24  2005/12/05 21:21:18  wntrmute
-; update build and version numbers
-;
-; Revision 1.23  2005/10/23 15:59:14  wntrmute
-; switched to InetLoad
-; added gp32 examples
-;
-; Revision 1.22  2005/09/30 11:16:58  wntrmute
-; added psp sdk documentation
-;
-; Revision 1.21  2005/09/19 22:10:07  wntrmute
-; update add/remove title/version when updating
-;
-; Revision 1.20  2005/09/18 22:11:57  wntrmute
-; added gamecube examples
-; fixed checks for installed examples
-;
-; Revision 1.19  2005/09/14 17:36:24  wntrmute
-; added gba examples
-; updated to latest devkitARM, libgba & libnds
-;
-; Revision 1.18  2005/09/06 15:44:51  wntrmute
-; fixed path error on library create dir
-;
-; Revision 1.17  2005/08/29 21:22:04  wntrmute
-; *** empty log message ***
-;
-; Revision 1.16  2005/08/25 09:10:58  wntrmute
-; updated version
-; create pn2 appdata folder before installing usertools
-; create libdirs before extracting
-;
-; Revision 1.15  2005/08/24 05:04:49  wntrmute
-; updated devkitPSP
-; stop deleting msys and library dirs
-;
-; Revision 1.14  2005/08/16 08:07:49  wntrmute
-; use plugin for tar.bz2
-;
-; Revision 1.13  2005/08/14 02:05:34  wntrmute
-; don't select packages which haven't been installed
-;
-; Revision 1.12  2005/08/14 00:56:04  wntrmute
-; default updater to remove downloads
-;
-; Revision 1.11  2005/08/13 06:38:28  wntrmute
-; env vars removed on uninstall
-;
-; Revision 1.10  2005/08/12 10:43:35  wntrmute
-; fixed pn2 file association
-;
-; Revision 1.9  2005/08/12 09:32:31  wntrmute
-; set up default pn2 tools
-; added nds examples
-;
-; Revision 1.8  2005/08/12 01:03:17  wntrmute
-; only insert pn2 shortcut when installed
-; hide devkitARM group when nothing to update
-;
-; Revision 1.7  2005/08/11 12:04:24  wntrmute
-; added option to delete downloads
-; fixed shortcut update
-; delete old updaters
-;
-; Revision 1.6  2005/08/11 10:29:30  wntrmute
-; added pn2 to shortcuts
-; fixed new version download
-;
-; Revision 1.5  2005/08/10 13:54:12  wntrmute
-; *** empty log message ***
-;
+; $Id: devkitPro.nsi,v 1.38 2007-06-05 16:28:00 wntrmute Exp $
 
 ; plugins required
 ; untgz     - http://nsis.sourceforge.net/wiki/UnTGZ
@@ -120,13 +8,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.4.1"
+!define PRODUCT_VERSION "1.4.4"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "29"
+!define BUILD "32"
 
 SetCompressor lzma
 
@@ -207,7 +95,7 @@ Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 Caption "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 OutFile "${PRODUCT_NAME}-${PRODUCT_VERSION}.exe"
 InstallDir "c:\devkitPro"
-ShowInstDetails show
+ShowInstDetails hide
 ShowUnInstDetails show
 
 var Install
@@ -232,6 +120,8 @@ var GBAEXAMPLES
 var GBAEXAMPLES_VER
 var GP32EXAMPLES
 var GP32EXAMPLES_VER
+;var NDSTOOL
+;var NDSTOOL_VER
 var DEVKITPPC
 var DEVKITPPC_VER
 var CUBEEXAMPLES
@@ -300,6 +190,11 @@ SectionGroup devkitARM SecdevkitARM
 	Section "gp32 examples" gp32examples
           SectionIn 1 2
 	SectionEnd
+
+;	Section "ndstool" ndstool
+;          SectionIn 1 2
+;	SectionEnd
+
 SectionGroupEnd
 
 SectionGroup "devkitPPC" grpdevkitPPC
@@ -408,6 +303,8 @@ Section -installComponents
   push ${Secinsight}
   push $INSIGHT
   Call DownloadIfNeeded
+  
+  SetDetailsView show
 
   IntCmp $Install 1 +1 SkipInstall SkipInstall
 
@@ -654,6 +551,7 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibndsfat} "Nintendo DS FAT library"
   !insertmacro MUI_DESCRIPTION_TEXT ${ndsexamples} "Nintendo DS example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${gbaexamples} "Nintendo GBA example code"
+;  !insertmacro MUI_DESCRIPTION_TEXT ${ndstool} "Nintendo DS rom image manipulation tool"
   !insertmacro MUI_DESCRIPTION_TEXT ${gp32examples} "Gamepark GP32 example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${cubeexamples} "Nintendo Gamecube example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${Secinsight} "GUI debugger"
@@ -699,7 +597,8 @@ downloadINI:
   Rename $EXEDIR\devkitProUpdate.ini $EXEDIR\devkitProUpdate.ini.old
 
   ; Quietly download the latest devkitProUpdate.ini file
-  inetc::get  "http://devkitpro.sourceforge.net/devkitProUpdate.ini" "$EXEDIR\devkitProUpdate.ini" /END
+  inetc::get  /BANNER "Checking for updates ..." "http://devkitpro.sourceforge.net/devkitProUpdate.ini" "$EXEDIR\devkitProUpdate.ini" /END
+
 
   pop $R0
 
@@ -717,7 +616,7 @@ gotINI:
     ; downloaded ini older than current
     Delete $EXEDIR\devkitProUpdate.ini
     Rename $EXEDIR\devkitProUpdate.ini.old $EXEDIR\devkitProUpdate.ini
-    Goto Finish
+    Goto gotINI
 
   newVersion:
     MessageBox MB_YESNO|MB_ICONINFORMATION|MB_DEFBUTTON1 "A newer version of devkitProUpdater is available. Would you like to upgrade now?" IDYES upgradeMe IDNO Finish
@@ -811,7 +710,6 @@ installing:
   ReadINIStr $DEVKITPPC "$EXEDIR\devkitProUpdate.ini" "devkitPPC" "File"
   ReadINIStr $DEVKITPPC_VER "$EXEDIR\devkitProUpdate.ini" "devkitPPC" "Version"
   SectionSetSize ${SecdevkitPPC} $R0
-
 
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "cubeexamples" "Size"
   ReadINIStr $CUBEEXAMPLES "$EXEDIR\devkitProUpdate.ini" "cubeexamples" "File"
@@ -1068,7 +966,7 @@ Function UpgradedevkitProUpdate
   ReadINIStr $R1 "$EXEDIR\devkitProUpdate.ini" "devkitProUpdate" "Filename"
 
   DetailPrint "Downloading new version of devkitProUpdater..."
-  inetc::get /RESUME "" "$R0/$R1" "$EXEDIR\$R1" /END
+  inetc::get /BANNER "Downloading new version of devkitProUpdater..." /RESUME "" "$R0/$R1" "$EXEDIR\$R1" /END
   Pop $0
   StrCmp $0 "OK" success
     ; Failure
@@ -1117,6 +1015,7 @@ FunctionEnd
 
 var FileName
 var Section
+var retry
 
 ;-----------------------------------------------------------------------------------------------------------------------
 Function DownloadIfNeeded
@@ -1132,12 +1031,19 @@ Function DownloadIfNeeded
 
   ifFileExists "$EXEDIR\$FileName" ThisFileFound
 
+  
+  StrCpy $retry 3
+  
+retryLoop:
   inetc::get /RESUME "" "http://downloads.sourceforge.net/devkitpro/$FileName" "$EXEDIR\$FileName" /END
   Pop $0
   StrCmp $0 "OK" ThisFileFound
 
+  IntOp $retry $retry - 1
+  IntCmp $retry 0 +1 +1 retryLoop
+
   detailprint $0
-  abort "oh ffs"
+  abort "$FileName could not be downloaded at this time."
 
 ThisFileFound:
 SkipThisDL:
@@ -1162,8 +1068,6 @@ Function ExtractToolChain
   SectionGetFlags $R0 $0
   IntOp $0 $0 & ${SF_SELECTED}
   IntCmp $0 ${SF_SELECTED} +1 SkipExtract
-
-  RMDir /r $INSTDIR\$R4
 
   ExecWait '"$EXEDIR\$R2" -y -o$INSTDIR'
 
