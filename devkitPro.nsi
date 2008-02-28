@@ -1,4 +1,4 @@
-; $Id: devkitPro.nsi,v 1.38 2007-06-05 16:28:00 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.39 2008-02-28 14:31:31 wntrmute Exp $
 
 ; plugins required
 ; untgz     - http://nsis.sourceforge.net/wiki/UnTGZ
@@ -8,13 +8,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.4.4"
+!define PRODUCT_VERSION "1.4.5"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "32"
+!define BUILD "34"
 
 SetCompressor lzma
 
@@ -120,12 +120,16 @@ var GBAEXAMPLES
 var GBAEXAMPLES_VER
 var GP32EXAMPLES
 var GP32EXAMPLES_VER
-;var NDSTOOL
-;var NDSTOOL_VER
+
 var DEVKITPPC
 var DEVKITPPC_VER
 var CUBEEXAMPLES
 var CUBEEXAMPLES_VER
+var WIIEXAMPLES
+var WIIEXAMPLES_VER
+var LIBOGC
+var LIBOGC_VER
+
 var DEVKITPSP
 var DEVKITPSP_VER
 var PSPDOC
@@ -136,6 +140,9 @@ var PNOTEPAD
 var PNOTEPAD_VER
 var INSIGHT
 var INSIGHT_VER
+
+var GCUBE
+var GCUBE_VER
 
 var BASEDIR
 var Updates
@@ -190,24 +197,28 @@ SectionGroup devkitARM SecdevkitARM
 	Section "gp32 examples" gp32examples
           SectionIn 1 2
 	SectionEnd
-
-;	Section "ndstool" ndstool
-;          SectionIn 1 2
-;	SectionEnd
-
 SectionGroupEnd
 
 SectionGroup "devkitPPC" grpdevkitPPC
-        Section "devkitPPC" SecdevkitPPC
-          SectionIn 1 3
-        SectionEnd
-	Section "gamecube examples" cubeexamples
-          SectionIn 1 3
-	SectionEnd
+  Section "devkitPPC" devkitPPC
+    SectionIn 1 3
+  SectionEnd
+  Section "libogc" libogc
+    SectionIn 1 3
+  SectionEnd
+  Section "Gamecube examples" cubeexamples
+    SectionIn 1 3
+  SectionEnd
+  Section "Wii examples" wiiexamples
+    SectionIn 1 3
+  SectionEnd
+  Section "Gcube" gcube
+    SectionIn 1 3
+  SectionEnd
 SectionGroupEnd
 
 SectionGroup "devkitPSP" grpdevkitPSP
-  Section "devkitPSP" SecdevkitPSP
+  Section "devkitPSP" devkitPSP
     SectionIn 1 4
   SectionEnd
   Section "psp sdk documentation" pspdoc
@@ -222,6 +233,7 @@ SectionEnd
 Section "Insight" Secinsight
   SectionIn 1
 SectionEnd
+
 
 Section -installComponents
 
@@ -280,15 +292,23 @@ Section -installComponents
   push $GP32EXAMPLES
   Call DownloadIfNeeded
 
-  push ${SecdevkitPPC}
+  push ${devkitPPC}
   push $DEVKITPPC
+  Call DownloadIfNeeded
+
+  push ${libogc}
+  push $LIBOGC
   Call DownloadIfNeeded
 
   push ${cubeexamples}
   push $CUBEEXAMPLES
   Call DownloadIfNeeded
 
-  push ${SecdevkitPSP}
+  push ${wiiexamples}
+  push $WIIEXAMPLES
+  Call DownloadIfNeeded
+
+  push ${devkitPSP}
   push $DEVKITPSP
   Call DownloadIfNeeded
 
@@ -304,6 +324,10 @@ Section -installComponents
   push $INSIGHT
   Call DownloadIfNeeded
   
+  push ${gcube}
+  push $GCUBE
+  Call DownloadIfNeeded
+
   SetDetailsView show
 
   IntCmp $Install 1 +1 SkipInstall SkipInstall
@@ -330,22 +354,25 @@ SkipMsys:
   push "$BASEDIR/devkitARM"
   push "devkitARM"
   push $DEVKITARM_VER
+  push 1
   call ExtractToolChain
 
-  push ${SecdevkitPPC}
+  push ${devkitPPC}
   push "DEVKITPPC"
   push $DEVKITPPC
   push "$BASEDIR/devkitPPC"
   push "devkitPPC"
   push $DEVKITPPC_VER
+  push 1
   call ExtractToolChain
 
-  push ${SecdevkitPSP}
+  push ${devkitPSP}
   push "DEVKITPSP"
   push $DEVKITPSP
   push "$BASEDIR/devkitPSP"
   push "devkitPSP"
   push $DEVKITPSP_VER
+  push 0
   call ExtractToolChain
 
   push ${Seclibgba}
@@ -390,39 +417,61 @@ SkipMsys:
   push $LIBMIRKO_VER
   call ExtractLib
 
+  push ${libogc}
+  push "libogc"
+  push $LIBOGC
+  push "libogc"
+  push $LIBOGC_VER
+  call ExtractLib
+
   push ${ndsexamples}
   push "examples\nds"
   push $NDSEXAMPLES
   push "ndsexamples"
   push $NDSEXAMPLES_VER
-  call ExtractLib
+  call ExtractExamples
 
   push ${gbaexamples}
   push "examples\gba"
   push $GBAEXAMPLES
   push "gbaexamples"
   push $GBAEXAMPLES_VER
-  call ExtractLib
+  call ExtractExamples
 
   push ${gp32examples}
   push "examples\gp32"
   push $GP32EXAMPLES
   push "gp32examples"
   push $GP32EXAMPLES_VER
-  call ExtractLib
+  call ExtractExamples
 
   push ${cubeexamples}
   push "examples\gamecube"
   push $CUBEEXAMPLES
   push "cubeexamples"
   push $CUBEEXAMPLES_VER
-  call ExtractLib
+  call ExtractExamples
+
+  push ${wiiexamples}
+  push "examples\wii"
+  push $WIIEXAMPLES
+  push "wiiexamples"
+  push $WIIEXAMPLES_VER
+  call ExtractExamples
+
 
   push ${pspdoc}
   push "doc\pspsdk"
   push $PSPDOC
   push "pspdoc"
   push $PSPDOC_VER
+  call ExtractLib
+
+  push ${gcube}
+  push "emulators"
+  push $GCUBE
+  push "gcube"
+  push $GCUBE_VER
   call ExtractLib
 
   !insertmacro SectionFlagIsSet ${Secinsight} ${SF_SELECTED} +1 SkipInsight
@@ -539,8 +588,8 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${SecMsys} "unix style tools for windows"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecdevkitARM} "toolchain for ARM platforms"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecdkARM} "toolchain for ARM platforms"
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecdevkitPPC} "toolchain for powerpc platforms"
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecdevkitPSP} "toolchain for psp"
+  !insertmacro MUI_DESCRIPTION_TEXT ${devkitPPC} "toolchain for powerpc platforms"
+  !insertmacro MUI_DESCRIPTION_TEXT ${devkitPSP} "toolchain for psp"
   !insertmacro MUI_DESCRIPTION_TEXT ${pspdoc} "PSP SDK documentation"
   !insertmacro MUI_DESCRIPTION_TEXT ${Pnotepad} "a programmer's editor"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibgba} "Nintendo GBA development library"
@@ -549,12 +598,14 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibnds} "Nintendo DS development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Secdswifi} "Nintendo DS wifi library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibndsfat} "Nintendo DS FAT library"
+  !insertmacro MUI_DESCRIPTION_TEXT ${libogc} "Nintendo Wii and Gamecube development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${ndsexamples} "Nintendo DS example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${gbaexamples} "Nintendo GBA example code"
-;  !insertmacro MUI_DESCRIPTION_TEXT ${ndstool} "Nintendo DS rom image manipulation tool"
   !insertmacro MUI_DESCRIPTION_TEXT ${gp32examples} "Gamepark GP32 example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${cubeexamples} "Nintendo Gamecube example code"
+  !insertmacro MUI_DESCRIPTION_TEXT ${wiiexamples} "Nintendo Wii example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${Secinsight} "GUI debugger"
+  !insertmacro MUI_DESCRIPTION_TEXT ${gcube} "Gamecube emulator"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 var keepINI
@@ -659,7 +710,6 @@ installing:
   ReadINIStr $DEVKITARM "$EXEDIR\devkitProUpdate.ini" "devkitARM" "File"
   ReadINIStr $DEVKITARM_VER "$EXEDIR\devkitProUpdate.ini" "devkitARM" "Version"
   SectionSetSize ${SecdkARM} $R0
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitPPC" "Size"
 
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libgba" "Size"
   ReadINIStr $LIBGBA "$EXEDIR\devkitProUpdate.ini" "libgba" "File"
@@ -670,7 +720,6 @@ installing:
   ReadINIStr $LIBGBA_FAT "$EXEDIR\devkitProUpdate.ini" "libgbafat" "File"
   ReadINIStr $LIBGBA_FAT_VER "$EXEDIR\devkitProUpdate.ini" "libgbafat" "Version"
   SectionSetSize ${Seclibgbafat} $R0
-
 
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libnds" "Size"
   ReadINIStr $LIBNDS "$EXEDIR\devkitProUpdate.ini" "libnds" "File"
@@ -692,6 +741,11 @@ installing:
   ReadINIStr $LIBMIRKO_VER "$EXEDIR\devkitProUpdate.ini" "libmirko" "Version"
   SectionSetSize ${Seclibmirko} $R0
 
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libogc" "Size"
+  ReadINIStr $LIBOGC "$EXEDIR\devkitProUpdate.ini" "libogc" "File"
+  ReadINIStr $LIBOGC_VER "$EXEDIR\devkitProUpdate.ini" "libogc" "Version"
+  SectionSetSize ${libogc} $R0
+
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "ndsexamples" "Size"
   ReadINIStr $NDSEXAMPLES "$EXEDIR\devkitProUpdate.ini" "ndsexamples" "File"
   ReadINIStr $NDSEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "ndsexamples" "Version"
@@ -707,19 +761,31 @@ installing:
   ReadINIStr $GP32EXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "gp32examples" "Version"
   SectionSetSize ${gp32examples} $R0
 
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitPPC" "Size"
   ReadINIStr $DEVKITPPC "$EXEDIR\devkitProUpdate.ini" "devkitPPC" "File"
   ReadINIStr $DEVKITPPC_VER "$EXEDIR\devkitProUpdate.ini" "devkitPPC" "Version"
-  SectionSetSize ${SecdevkitPPC} $R0
+  SectionSetSize ${devkitPPC} $R0
 
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "cubeexamples" "Size"
   ReadINIStr $CUBEEXAMPLES "$EXEDIR\devkitProUpdate.ini" "cubeexamples" "File"
   ReadINIStr $CUBEEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "cubeexamples" "Version"
   SectionSetSize ${cubeexamples} $R0
 
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "wiiexamples" "Size"
+  ReadINIStr $WIIEXAMPLES "$EXEDIR\devkitProUpdate.ini" "wiiexamples" "File"
+  ReadINIStr $WIIEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "wiiexamples" "Version"
+  SectionSetSize ${wiiexamples} $R0
+
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "gcube" "Size"
+  ReadINIStr $GCUBE "$EXEDIR\devkitProUpdate.ini" "gcube" "File"
+  ReadINIStr $GCUBE_VER "$EXEDIR\devkitProUpdate.ini" "gcube" "Version"
+  SectionSetSize ${gcube} $R0
+
+
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitPSP" "Size"
   ReadINIStr $DEVKITPSP "$EXEDIR\devkitProUpdate.ini" "devkitPSP" "File"
   ReadINIStr $DEVKITPSP_VER "$EXEDIR\devkitProUpdate.ini" "devkitPSP" "Version"
-  SectionSetSize ${SecdevkitPSP} $R0
+  SectionSetSize ${devkitPSP} $R0
 
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "pspdoc" "Size"
   ReadINIStr $PSPDOC "$EXEDIR\devkitProUpdate.ini" "pspdoc" "File"
@@ -746,8 +812,6 @@ installing:
   File /oname=$mirrorINI "Dialogs\PickMirror.ini"
 
   IntCmp $Updating 1 +1 first_install
-
-  ;ReadINIStr $MirrorURL "$INSTDIR\installed.ini" "mirror" "url"
 
   StrCpy $Updates 0
 
@@ -841,7 +905,14 @@ dkARMupdates:
 
   push $0
   push $DEVKITPPC_VER
-  push ${SecdevkitPPC}
+  push ${devkitPPC}
+  call checkVersion
+
+  ReadINIStr $0 "$INSTDIR\installed.ini" "libogc" "Version"
+
+  push $0
+  push $LIBOGC_VER
+  push ${libogc}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "cubeexamples" "Version"
@@ -850,6 +921,21 @@ dkARMupdates:
   push $CUBEEXAMPLES_VER
   push ${cubeexamples}
   call checkVersion
+
+  ReadINIStr $0 "$INSTDIR\installed.ini" "wiiexamples" "Version"
+
+  push $0
+  push $WIIEXAMPLES_VER
+  push ${wiiexamples}
+  call checkVersion
+
+  ReadINIStr $0 "$INSTDIR\installed.ini" "gcube" "Version"
+
+  push $0
+  push $GCUBE_VER
+  push ${gcube}
+  call checkVersion
+
 
   IntOp $R1 $Updates - $R2
   IntCmp $R1 0 +1 dkPPCupdates dkPPCupdates
@@ -863,7 +949,7 @@ dkPPCupdates:
 
   push $0
   push $DEVKITPSP_VER
-  push ${SecdevkitPSP}
+  push ${devkitPSP}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "pspdoc" "Version"
@@ -1058,9 +1144,10 @@ var FOLDER
 ;-----------------------------------------------------------------------------------------------------------------------
 Function ExtractToolChain
 ;-----------------------------------------------------------------------------------------------------------------------
+  pop $R6  ; delete directory flag
   pop $R5  ; version
   pop $R4  ; section name
-  pop $R3  ; path
+  pop $R3  ; name
   pop $R2  ; 7zip sfx
   pop $R1  ; env variable
   pop $R0  ; section flags
@@ -1069,6 +1156,16 @@ Function ExtractToolChain
   IntOp $0 $0 & ${SF_SELECTED}
   IntCmp $0 ${SF_SELECTED} +1 SkipExtract
 
+
+  MessageBox MB_ICONINFORMATION|MB_OK "$R6"
+
+  IntCmp $R6 1 +1 SkipRemove
+
+  MessageBox MB_ICONINFORMATION|MB_OK "$R4"
+
+  RMDir /r "$INSTDIR\$R4"
+
+SkipRemove:
   ExecWait '"$EXEDIR\$R2" -y -o$INSTDIR'
 
   WriteRegStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" $R1 $R3
@@ -1082,6 +1179,44 @@ Function ExtractToolChain
 SkipExtract:
 
 FunctionEnd
+
+
+
+;-----------------------------------------------------------------------------------------------------------------------
+Function ExtractExamples
+;-----------------------------------------------------------------------------------------------------------------------
+  pop $R3  ; version
+  pop $R2  ; section name
+  pop $LIB ; filename
+  pop $FOLDER ; extract to
+  pop $R0  ; section flags
+
+  SectionGetFlags $R0 $0
+  IntOp $0 $0 & ${SF_SELECTED}
+  IntCmp $0 ${SF_SELECTED} +1 SkipExtract
+
+  RMDir /r "$INSTDIR\$FOLDER"
+  CreateDirectory "$INSTDIR\$FOLDER"
+  untgz::extract -d "$INSTDIR\$FOLDER" -zbz2 "$EXEDIR\$LIB"
+
+  StrCmp $R0 "success" succeeded
+
+    SetDetailsView show
+    DetailPrint "failed to extract $LIB: $R0"
+
+  abort
+  goto SkipExtract
+succeeded:
+
+  WriteINIStr $INSTDIR\installed.ini $R2 Version $R3
+  push $LIB
+  call RemoveFile
+
+SkipExtract:
+
+FunctionEnd
+
+
 
 ;-----------------------------------------------------------------------------------------------------------------------
 Function ExtractLib
@@ -1098,8 +1233,6 @@ Function ExtractLib
 
   CreateDirectory "$INSTDIR\$FOLDER"
   untgz::extract -d "$INSTDIR\$FOLDER" -zbz2 "$EXEDIR\$LIB"
-
-  ;Pop $R0
 
   StrCmp $R0 "success" succeeded
 
