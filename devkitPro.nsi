@@ -1,4 +1,4 @@
-; $Id: devkitPro.nsi,v 1.39 2008-02-28 14:31:31 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.40 2008-02-28 18:53:42 wntrmute Exp $
 
 ; plugins required
 ; untgz     - http://nsis.sourceforge.net/wiki/UnTGZ
@@ -493,9 +493,6 @@ SkipInsight:
   ZipDLL::extractall $EXEDIR/$PNOTEPAD "$INSTDIR/Programmers Notepad"
   push $PNOTEPAD
   call RemoveFile
-
-  CreateDirectory "$APPDATA\Echo Software\PN2"
-  File "/oname=$APPDATA\Echo Software\PN2\UserTools.xml" pn2\UserTools.xml
 
   WriteRegStr HKCR ".pnproj" "" "PN2.pnproj.1"
   WriteRegStr HKCR "PN2.pnproj.1\shell\open\command" "" '"$INSTDIR\Programmers Notepad\pn.exe" "%1"'
