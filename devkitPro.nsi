@@ -1,4 +1,4 @@
-; $Id: devkitPro.nsi,v 1.41 2008-02-29 16:07:42 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.42 2008-04-21 01:50:26 wntrmute Exp $
 
 ; plugins required
 ; untgz     - http://nsis.sourceforge.net/wiki/UnTGZ
@@ -8,21 +8,23 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.4.5"
+!define PRODUCT_VERSION "1.4.6"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "35"
+!define BUILD "36"
 
 SetCompressor lzma
 
 ; MUI 1.67 compatible ------
-!include "MUI.nsh"
+!include "MUI2.nsh"
 !include "zipdll.nsh"
 !include "Sections.nsh"
 !include "StrFunc.nsh"
+!include "InstallOptions.nsh"
+
 ;${StrTok}
 ${StrRep}
 ${UnStrRep}
@@ -80,12 +82,13 @@ FunctionEnd
 ; MUI Settings
 !define MUI_HEADERIMAGE
 !define MUI_HEADERIMAGE_BITMAP "devkitPro.bmp" ; optional
-!define MUI_ABORTWARNING "Are you sure you want to quit ${PRODUCT_NAME} ${PRODUCT_VERSION}?"
+!define MUI_ABORTWARNING
+; "Are you sure you want to quit ${PRODUCT_NAME} ${PRODUCT_VERSION}?"
 !define MUI_COMPONENTSPAGE_SMALLDESC
 
 ; Welcome page
-!define MUI_WELCOMEPAGE_TITLE "Welcome to ${PRODUCT_NAME}\r\nVersion ${PRODUCT_VERSION}"
-!define MUI_WELCOMEPAGE_TEXT "${PRODUCT_NAME} automates the process of downloading, installing, and uninstalling devkitPro Components.\r\n\nClick Next to continue."
+!define MUI_WELCOMEPAGE_TITLE "Welcome to ${PRODUCT_NAME}$\r$\nVersion ${PRODUCT_VERSION}"
+!define MUI_WELCOMEPAGE_TEXT "${PRODUCT_NAME} automates the process of downloading, installing, and uninstalling devkitPro Components.$\r$\n$\nClick Next to continue."
 !insertmacro MUI_PAGE_WELCOME
 
 Page custom ChooseMirrorPage
@@ -125,10 +128,13 @@ var FINISH_TITLE
 var FINISH_TEXT
 
 ; Finish page
-!define MUI_FINISHPAGE_TITLE $FINISH_TITLE
-!define MUI_FINISHPAGE_TEXT $FINISH_TEXT
-!define MUI_FINISHPAGE_TEXT_LARGE $INSTALLED_TEXT
-!insertmacro MUI_PAGE_FINISH
+;!define MUI_FINISHPAGE_TITLE $FINISH_TITLE
+;!define MUI_FINISHPAGE_TEXT $FINISH_TEXT
+;!define MUI_FINISHPAGE_TEXT_LARGE $INSTALLED_TEXT
+;!define MUI_PAGE_CUSTOMFUNCTION_PRE FinishPagePre
+;!define MUI_PAGE_CUSTOMFUNCTION_SHOW FinishPageShow
+;!insertmacro MUI_PAGE_FINISH
+Page custom FinishPage
 
 ; Uninstaller pages
 !insertmacro MUI_UNPAGE_INSTFILES
@@ -137,7 +143,7 @@ var FINISH_TEXT
 !insertmacro MUI_LANGUAGE "English"
 
 ; Reserve files
-!insertmacro MUI_RESERVEFILE_INSTALLOPTIONS
+;!insertmacro MUI_RESERVEFILE_INSTALLOPTIONS
 
 ; MUI end ------
 
@@ -152,6 +158,7 @@ var Install
 var Updating
 var MSYS
 var MSYS_VER
+
 var DEVKITARM
 var DEVKITARM_VER
 var LIBGBA
@@ -170,6 +177,8 @@ var GBAEXAMPLES
 var GBAEXAMPLES_VER
 var GP32EXAMPLES
 var GP32EXAMPLES_VER
+var DEFAULT_ARM7
+var DEFAULT_ARM7_VER
 
 var DEVKITPPC
 var DEVKITPPC_VER
@@ -247,6 +256,11 @@ SectionGroup devkitARM SecdevkitARM
 	Section "gp32 examples" gp32examples
           SectionIn 1 2
 	SectionEnd
+
+	Section "nds default arm7" defaultarm7
+          SectionIn 1 2
+	SectionEnd
+
 SectionGroupEnd
 
 SectionGroup "devkitPPC" grpdevkitPPC
@@ -332,6 +346,10 @@ Section -installComponents
 
   push ${ndsexamples}
   push $NDSEXAMPLES
+  Call DownloadIfNeeded
+
+  push ${defaultarm7}
+  push $DEFAULT_ARM7
   Call DownloadIfNeeded
 
   push ${gbaexamples}
@@ -453,6 +471,13 @@ SkipMsys:
   push $LIBNDS_FAT_VER
   call ExtractLib
 
+  push ${defaultarm7}
+  push "libnds"
+  push $DEFAULT_ARM7
+  push "defaultarm7"
+  push $DEFAULT_ARM7_VER
+  call ExtractLib
+
   push ${Secdswifi}
   push "libnds"
   push $DSWIFI
@@ -555,7 +580,7 @@ SkipPnotepad:
   Delete $INSTDIR\devkitProUpdater*.*
   StrCmp $EXEDIR $INSTDIR skip_copy
 
-  CopyFiles $EXEDIR\$R1 $INSTDIR\$R1
+  CopyFiles "$EXEDIR\$R1" "$INSTDIR\$R1"
 skip_copy:
 
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
@@ -653,10 +678,12 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${wiiexamples} "Nintendo Wii example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${Secinsight} "GUI debugger"
   !insertmacro MUI_DESCRIPTION_TEXT ${gcube} "Gamecube emulator"
+  !insertmacro MUI_DESCRIPTION_TEXT ${defaultarm7} "default Nintendo DS arm7 core"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 var keepINI
 var mirrorINI
+var finishINI
 
 ;-----------------------------------------------------------------------------------------------------------------------
 Function .onInit
@@ -798,6 +825,11 @@ installing:
   ReadINIStr $NDSEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "ndsexamples" "Version"
   SectionSetSize ${ndsexamples} $R0
 
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "defaultarm7" "Size"
+  ReadINIStr $DEFAULT_ARM7 "$EXEDIR\devkitProUpdate.ini" "defaultarm7" "File"
+  ReadINIStr $DEFAULT_ARM7_VER "$EXEDIR\devkitProUpdate.ini" "defaultarm7" "Version"
+  SectionSetSize ${defaultarm7} $R0
+
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "gbaexamples" "Size"
   ReadINIStr $GBAEXAMPLES "$EXEDIR\devkitProUpdate.ini" "gbaexamples" "File"
   ReadINIStr $GBAEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "gbaexamples" "Version"
@@ -849,7 +881,7 @@ installing:
   ReadINIStr $INSIGHT_VER "$EXEDIR\devkitProUpdate.ini" "insight" "Version"
   SectionSetSize ${Secinsight} $R0
 
-  !insertmacro MUI_INSTALLOPTIONS_EXTRACT_AS "Dialogs\PickMirror.ini" "PickMirror.ini"
+  !insertmacro INSTALLOPTIONS_EXTRACT_AS "Dialogs\PickMirror.ini" "PickMirror.ini"
 
 
   GetTempFileName $keepINI $PLUGINSDIR
@@ -857,6 +889,8 @@ installing:
 
   GetTempFileName $mirrorINI $PLUGINSDIR
   File /oname=$mirrorINI "Dialogs\PickMirror.ini"
+  GetTempFileName $finishINI $PLUGINSDIR
+  File /oname=$PLUGINSDIR\donate.bmp "Dialogs\donate.bmp"
 
   IntCmp $Updating 1 +1 first_install
 
@@ -919,6 +953,13 @@ installing:
   push $0
   push $NDSEXAMPLES_VER
   push ${ndsexamples}
+  call checkVersion
+
+  ReadINIStr $0 "$INSTDIR\installed.ini" "defaultarm7" "Version"
+
+  push $0
+  push $DEFAULT_ARM7_VER
+  push ${defaultarm7}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "gbaexamples" "Version"
@@ -1231,8 +1272,6 @@ SkipExtract:
 
 FunctionEnd
 
-
-
 ;-----------------------------------------------------------------------------------------------------------------------
 Function ExtractExamples
 ;-----------------------------------------------------------------------------------------------------------------------
@@ -1373,3 +1412,71 @@ update:
 done:
 
 FunctionEnd
+
+;-----------------------------------------------------------------------------------------------------------------------
+Function Donate
+;-----------------------------------------------------------------------------------------------------------------------
+  ExecShell "open" "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=donations%40devkitpro%2eorg&item_name=devkitPro%20donation&item_number=002&amount=5%2e00&no_shipping=0&return=http%3a%2f%2fwww%2edevkitpro%2eorg%2fthanks%2ephp&cancel_return=http%3a%2f%2fwww%2edevkitpro%2eorg%2fsupport%2ddevkitpro%2f&tax=0&currency_code=USD&bn=PP%2dDonationsBF&charset=UTF%2d8"
+FunctionEnd
+
+;-----------------------------------------------------------------------------------------------------------------------
+Function WhyDonate
+;-----------------------------------------------------------------------------------------------------------------------
+  ExecShell "open" "http://www.devkitpro.org/support-devkitpro/"
+FunctionEnd
+
+;-----------------------------------------------------------------------------------------------------------------------
+Function FinishPage
+;-----------------------------------------------------------------------------------------------------------------------
+  SendMessage $mui.Button.Next ${WM_SETTEXT} 0 "STR:Finish"
+
+  ;Create dialog
+  nsDialogs::Create /NOUNLOAD 1044
+  Pop $R0
+  nsDialogs::SetRTL /NOUNLOAD $(^RTL)
+  SetCtlColors $R0 "" "${MUI_BGCOLOR}"
+
+  ;Image control
+  ${NSD_CreateBitmap} 0u 0u 109u 193u ""
+  Pop $R1
+
+  ${NSD_SetImage} $R1 $PLUGINSDIR\modern-wizard.bmp $R2
+
+  ${NSD_CreateLabel} 120u 10u 195u 38u "$FINISH_TITLE"
+  Pop $R0
+  SetCtlColors $R0 "" "${MUI_BGCOLOR}"
+  CreateFont $R1 "$(^Font)" "12" "700"
+  SendMessage $R0 ${WM_SETFONT} $R1 0
+  
+  ${NSD_CreateLabel} 120u 50u -1u 10u "$FINISH_TEXT"
+  Pop $R0
+  SetCtlColors $R0 "" "${MUI_BGCOLOR}"
+
+  IntCmp $Updating 1 +1 ShowPage ShowPage
+  IntCmp $Updates 0 Showpage +1 +1
+
+  ${NSD_CreateLabel} 134u 120u 162u 12u "Help keep devkitPro toolchains free"
+  Pop $R0
+  SetCtlColors $R0 "000080" "FFFFFF"
+  CreateFont $R1 "(^Font)" "10" "700"
+  SendMessage $R0 ${WM_SETFONT} $R1 1
+
+  ${NSD_CreateButton} 164u 134u 102u 18u "Donate $$5 now"
+  pop $R0
+  CreateFont $R1 "(^Font)" "12" "700"
+  SendMessage $R0 ${WM_SETFONT} $R1 1
+  ${NSD_OnClick} $R0 Donate
+
+  ${NSD_CreateLink} 190u 154u 76u 12u "Why Donate?"
+  pop $R0
+  SetCtlColors $R0 "000080" "FFFFFF"
+  CreateFont $R1 "(^Font)" "8" "700"
+  SendMessage $R0 ${WM_SETFONT} $R1 1
+  ${NSD_OnClick} $R0 WhyDonate
+
+Showpage:
+
+  nsDialogs::Show
+
+FunctionEnd
+
