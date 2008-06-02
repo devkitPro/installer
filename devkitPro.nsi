@@ -1,4 +1,4 @@
-; $Id: devkitPro.nsi,v 1.42 2008-04-21 01:50:26 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.43 2008-06-02 05:00:11 wntrmute Exp $
 
 ; plugins required
 ; untgz     - http://nsis.sourceforge.net/wiki/UnTGZ
@@ -8,13 +8,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.4.6"
+!define PRODUCT_VERSION "1.4.7"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "36"
+!define BUILD "37"
 
 SetCompressor lzma
 
@@ -188,6 +188,8 @@ var WIIEXAMPLES
 var WIIEXAMPLES_VER
 var LIBOGC
 var LIBOGC_VER
+var LIBOGC_FAT
+var LIBOGC_FAT_VER
 
 var DEVKITPSP
 var DEVKITPSP_VER
@@ -268,6 +270,9 @@ SectionGroup "devkitPPC" grpdevkitPPC
     SectionIn 1 3
   SectionEnd
   Section "libogc" libogc
+    SectionIn 1 3
+  SectionEnd
+  Section "libfat-ogc" libogcfat
     SectionIn 1 3
   SectionEnd
   Section "Gamecube examples" cubeexamples
@@ -366,6 +371,10 @@ Section -installComponents
 
   push ${libogc}
   push $LIBOGC
+  Call DownloadIfNeeded
+
+  push ${libogcfat}
+  push $LIBOGC_FAT
   Call DownloadIfNeeded
 
   push ${cubeexamples}
@@ -497,6 +506,13 @@ SkipMsys:
   push $LIBOGC
   push "libogc"
   push $LIBOGC_VER
+  call ExtractLib
+
+  push ${libogcfat}
+  push "libogc"
+  push $LIBOGC_FAT
+  push "libogcfat"
+  push $LIBOGC_FAT_VER
   call ExtractLib
 
   push ${ndsexamples}
@@ -671,6 +687,7 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${Secdswifi} "Nintendo DS wifi library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibndsfat} "Nintendo DS FAT library"
   !insertmacro MUI_DESCRIPTION_TEXT ${libogc} "Nintendo Wii and Gamecube development library"
+  !insertmacro MUI_DESCRIPTION_TEXT ${libogcfat} "Nintendo Gamecube/Wii FAT library"
   !insertmacro MUI_DESCRIPTION_TEXT ${ndsexamples} "Nintendo DS example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${gbaexamples} "Nintendo GBA example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${gp32examples} "Gamepark GP32 example code"
@@ -819,6 +836,11 @@ installing:
   ReadINIStr $LIBOGC "$EXEDIR\devkitProUpdate.ini" "libogc" "File"
   ReadINIStr $LIBOGC_VER "$EXEDIR\devkitProUpdate.ini" "libogc" "Version"
   SectionSetSize ${libogc} $R0
+
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libogcfat" "Size"
+  ReadINIStr $LIBOGC_FAT "$EXEDIR\devkitProUpdate.ini" "libogcfat" "File"
+  ReadINIStr $LIBOGC_FAT_VER "$EXEDIR\devkitProUpdate.ini" "libogcfat" "Version"
+  SectionSetSize ${libogcfat} $R0
 
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "ndsexamples" "Size"
   ReadINIStr $NDSEXAMPLES "$EXEDIR\devkitProUpdate.ini" "ndsexamples" "File"
@@ -1001,6 +1023,13 @@ dkARMupdates:
   push $0
   push $LIBOGC_VER
   push ${libogc}
+  call checkVersion
+
+  ReadINIStr $0 "$INSTDIR\installed.ini" "libogcfat" "Version"
+
+  push $0
+  push $LIBOGC_FAT_VER
+  push ${libogcfat}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "cubeexamples" "Version"
@@ -1225,6 +1254,9 @@ retryLoop:
   IntCmp $retry 0 +1 +1 retryLoop
 
   detailprint $0
+  ; zero byte files tend to be left at this point
+  ; delete it so the installer doesn't decide the file exists and break when trying to extract
+  Delete "$EXEDIR\$Filename"
   abort "$FileName could not be downloaded at this time."
 
 ThisFileFound:
