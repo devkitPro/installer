@@ -1,4 +1,4 @@
-; $Id: devkitPro.nsi,v 1.43 2008-06-02 05:00:11 wntrmute Exp $
+; $Id: devkitPro.nsi,v 1.43 2008/06/02 05:00:11 wntrmute Exp $
 
 ; plugins required
 ; untgz     - http://nsis.sourceforge.net/wiki/UnTGZ
@@ -8,13 +8,13 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.4.7"
+!define PRODUCT_VERSION "1.4.10"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "37"
+!define BUILD "40"
 
 SetCompressor lzma
 
@@ -173,12 +173,18 @@ var LIBNDS_FAT
 var LIBNDS_FAT_VER
 var NDSEXAMPLES
 var NDSEXAMPLES_VER
+var MAXMODDS
+var MAXMODDS_VER
+var MAXMODGBA
+var MAXMODGBA_VER
 var GBAEXAMPLES
 var GBAEXAMPLES_VER
 var GP32EXAMPLES
 var GP32EXAMPLES_VER
 var DEFAULT_ARM7
 var DEFAULT_ARM7_VER
+var FILESYSTEM
+var FILESYSTEM_VER
 
 var DEVKITPPC
 var DEVKITPPC_VER
@@ -231,6 +237,10 @@ SectionGroup devkitARM SecdevkitARM
           SectionIn 1 2
 	SectionEnd
 
+	Section "maxmodgba" maxmodgba
+          SectionIn 1 2
+	SectionEnd
+
 	Section "libmirko" Seclibmirko
           SectionIn 1 2
 	SectionEnd
@@ -240,6 +250,10 @@ SectionGroup devkitARM SecdevkitARM
 	SectionEnd
 
 	Section "libfat-nds" Seclibndsfat
+          SectionIn 1 2
+	SectionEnd
+
+	Section "maxmodds" maxmodds
           SectionIn 1 2
 	SectionEnd
 
@@ -260,6 +274,10 @@ SectionGroup devkitARM SecdevkitARM
 	SectionEnd
 
 	Section "nds default arm7" defaultarm7
+          SectionIn 1 2
+	SectionEnd
+
+	Section "filesystem" filesystem
           SectionIn 1 2
 	SectionEnd
 
@@ -349,12 +367,24 @@ Section -installComponents
   push $LIBMIRKO
   Call DownloadIfNeeded
 
+  push ${maxmodgba}
+  push $MAXMODGBA
+  Call DownloadIfNeeded
+
+  push ${maxmodds}
+  push $MAXMODDS
+  Call DownloadIfNeeded
+
   push ${ndsexamples}
   push $NDSEXAMPLES
   Call DownloadIfNeeded
 
   push ${defaultarm7}
   push $DEFAULT_ARM7
+  Call DownloadIfNeeded
+
+  push ${filesystem}
+  push $FILESYSTEM
   Call DownloadIfNeeded
 
   push ${gbaexamples}
@@ -466,6 +496,13 @@ SkipMsys:
   push $LIBGBA_FAT_VER
   call ExtractLib
 
+  push ${maxmodgba}
+  push "libgba"
+  push $MAXMODGBA
+  push "maxmodgba"
+  push $MAXMODGBA_VER
+  call ExtractLib
+
   push ${Seclibnds}
   push "libnds"
   push $LIBNDS
@@ -487,6 +524,13 @@ SkipMsys:
   push $DEFAULT_ARM7_VER
   call ExtractLib
 
+  push ${filesystem}
+  push "libnds"
+  push $FILESYSTEM
+  push "filesystem"
+  push $FILESYSTEM_VER
+  call ExtractLib
+
   push ${Secdswifi}
   push "libnds"
   push $DSWIFI
@@ -499,6 +543,13 @@ SkipMsys:
   push $LIBMIRKO
   push "libmirko"
   push $LIBMIRKO_VER
+  call ExtractLib
+
+  push ${maxmodds}
+  push "libnds"
+  push $MAXMODDS
+  push "maxmodds"
+  push $MAXMODDS_VER
   call ExtractLib
 
   push ${libogc}
@@ -681,9 +732,11 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${pspdoc} "PSP SDK documentation"
   !insertmacro MUI_DESCRIPTION_TEXT ${Pnotepad} "a programmer's editor"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibgba} "Nintendo GBA development library"
+  !insertmacro MUI_DESCRIPTION_TEXT ${maxmodgba} "Nintendo GBA audio library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibgbafat} "Nintendo GBA FAT library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibmirko} "Gamepark GP32 development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibnds} "Nintendo DS development library"
+  !insertmacro MUI_DESCRIPTION_TEXT ${maxmodds} "Nintendo DS audio library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Secdswifi} "Nintendo DS wifi library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibndsfat} "Nintendo DS FAT library"
   !insertmacro MUI_DESCRIPTION_TEXT ${libogc} "Nintendo Wii and Gamecube development library"
@@ -817,6 +870,16 @@ installing:
   ReadINIStr $LIBNDS_VER "$EXEDIR\devkitProUpdate.ini" "libnds" "Version"
   SectionSetSize ${Seclibnds} $R0
 
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "maxmodgba" "Size"
+  ReadINIStr $MAXMODGBA "$EXEDIR\devkitProUpdate.ini" "maxmodgba" "File"
+  ReadINIStr $MAXMODGBA_VER "$EXEDIR\devkitProUpdate.ini" "maxmodgba" "Version"
+  SectionSetSize ${maxmodgba} $R0
+
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "maxmodds" "Size"
+  ReadINIStr $MAXMODDS "$EXEDIR\devkitProUpdate.ini" "maxmodds" "File"
+  ReadINIStr $MAXMODDS_VER "$EXEDIR\devkitProUpdate.ini" "maxmodds" "Version"
+  SectionSetSize ${maxmodds} $R0
+
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libndsfat" "Size"
   ReadINIStr $LIBNDS_FAT "$EXEDIR\devkitProUpdate.ini" "libndsfat" "File"
   ReadINIStr $LIBNDS_FAT_VER "$EXEDIR\devkitProUpdate.ini" "libndsfat" "Version"
@@ -851,6 +914,11 @@ installing:
   ReadINIStr $DEFAULT_ARM7 "$EXEDIR\devkitProUpdate.ini" "defaultarm7" "File"
   ReadINIStr $DEFAULT_ARM7_VER "$EXEDIR\devkitProUpdate.ini" "defaultarm7" "Version"
   SectionSetSize ${defaultarm7} $R0
+
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "filesystem" "Size"
+  ReadINIStr $FILESYSTEM "$EXEDIR\devkitProUpdate.ini" "filesystem" "File"
+  ReadINIStr $FILESYSTEM_VER "$EXEDIR\devkitProUpdate.ini" "filesystem" "Version"
+  SectionSetSize ${filesystem} $R0
 
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "gbaexamples" "Size"
   ReadINIStr $GBAEXAMPLES "$EXEDIR\devkitProUpdate.ini" "gbaexamples" "File"
@@ -949,11 +1017,25 @@ installing:
   push ${Seclibgbafat}
   call checkVersion
 
+  ReadINIStr $0 "$INSTDIR\installed.ini" "maxmodgba" "Version"
+
+  push $0
+  push $MAXMODGBA_VER
+  push ${maxmodgba}
+  call checkVersion
+
   ReadINIStr $0 "$INSTDIR\installed.ini" "libnds" "Version"
 
   push $0
   push $LIBNDS_VER
   push ${Seclibnds}
+  call checkVersion
+
+  ReadINIStr $0 "$INSTDIR\installed.ini" "maxmodds" "Version"
+
+  push $0
+  push $MAXMODDS_VER
+  push ${maxmodds}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "dswifi" "Version"
@@ -982,6 +1064,13 @@ installing:
   push $0
   push $DEFAULT_ARM7_VER
   push ${defaultarm7}
+  call checkVersion
+
+  ReadINIStr $0 "$INSTDIR\installed.ini" "filesystem" "Version"
+
+  push $0
+  push $FILESYSTEM_VER
+  push ${filesystem}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "gbaexamples" "Version"
