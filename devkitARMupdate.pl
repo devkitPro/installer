@@ -231,7 +231,6 @@
   foreach my $key (keys %updates)
   {
     my $cmd = sprintf("tar -xjf %s -C $dir/%s", $updates{$key}, $install{$key});
-	printf("%s\n", $cmd);
     printf("Extracting %s...", $updates{$key});
     system($cmd) and die "Failed\n";
     printf("OK!\n");
