@@ -29,6 +29,11 @@
   my $downloader;
   my $archname;
 
+  if($ENV{"DEVKITPRO"} ne "")
+  {
+    $dir = $ENV{"DEVKITPRO"};
+  }
+
   if($#ARGV eq 0)
   {
     $dir = $ARGV[0];
@@ -43,6 +48,7 @@
   }
 
   printf("devkitARM Updater/Installer\n");
+  printf("Installing to %s\n", $dir);
 
   # Get OS information
   my $os = `uname`;
