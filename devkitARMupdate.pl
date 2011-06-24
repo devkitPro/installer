@@ -73,7 +73,6 @@
     exit(1);
   }
 
-  printf("arch ext = -%s.tar.bz2\n", $archname);
   # Set up directories
   if(!(-d "$dir"))
   {
