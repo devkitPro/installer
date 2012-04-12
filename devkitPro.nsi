@@ -1,24 +1,22 @@
-; $Id: devkitPro.nsi,v 1.43 2008/06/02 05:00:11 wntrmute Exp $
-
-
 RequestExecutionLevel user /* RequestExecutionLevel REQUIRED! */
 
 ; plugins required
-; untgz     - http://nsis.sourceforge.net/wiki/UnTGZ
+; untgz     - http://nsis.sourceforge.net/UnTGZ_plug-in
 ; inetc     - http://nsis.sourceforge.net/Inetc_plug-in
 ;             http://forums.winamp.com/showthread.php?s=&threadid=198596&perpage=40&highlight=&pagenumber=4
 ;             http://forums.winamp.com/attachment.php?s=&postid=1831346
 ; UAC         http://nsis.sourceforge.net/UAC_plug-in
+; ZipDLL      http://nsis.sourceforge.net/ZipDLL_plug-in
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.5.0"
+!define PRODUCT_VERSION "1.5.1"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "41"
+!define BUILD "42"
 
 SetCompressor lzma
 
@@ -681,22 +679,32 @@ SkipPSPdocMenu:
   !insertmacro MUI_STARTMENU_WRITE_END
   WriteUninstaller "$INSTDIR\uninst.exe"
   IntCmp $Updating 1 SkipInstall
+
+	MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "updating=$Updating"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninst.exe"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "InstallLocation" "$INSTDIR"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
 
+
+SkipInstall:
   WriteRegStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "DEVKITPRO" "$BASEDIR"
   SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 
+  ; Reset msys path to start of path
   ReadRegStr $1 HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "PATH"
   ; remove it to avoid multiple paths with separate installs
-  ${StrRep} $1 $1 "$INSTDIR\msys\bin;" ""
-  StrCpy $1 "$INSTDIR\msys\bin;$1"
-  WriteRegExpandStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "PATH" $1
-  SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
+  ${StrRep} $2 $1 "$INSTDIR\msys\bin;" ""
+  StrCpy $2 "$INSTDIR\msys\bin;$2"
+  StrCmp $2 "" 0 WritePath
 
-SkipInstall:
+	MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Trying to set path to blank string!$\nPlease add $INSTDIR\msys\bin; to the start of your path"
+  goto AbortPath
+
+WritePath:
+  WriteRegExpandStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "PATH" $2
+  SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
+AbortPath:
   ; write the version to the reg key so add/remove prograns has the right one
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
@@ -760,9 +768,6 @@ var keepINI
 var mirrorINI
 var finishINI
 
-!define UACSTR.I.ElvAbortReqAdmin "The devkitPro updater requires admin rights" ;custom error string, see _UAC.InitStrings macro in uac.nsh for more
-
-
 ;-----------------------------------------------------------------------------------------------------------------------
 Function .onInit
 ;-----------------------------------------------------------------------------------------------------------------------
@@ -781,8 +786,26 @@ loop:
   Abort
 launch:
 */
-  ${UAC.I.Elevate.AdminOnly}
-
+uac_tryagain:
+!insertmacro UAC_RunElevated
+${Switch} $0
+${Case} 0
+	${IfThen} $1 = 1 ${|} Quit ${|} ;we are the outer process, the inner process has done its work, we are done
+	${IfThen} $3 <> 0 ${|} ${Break} ${|} ;we are admin, let the show go on
+	${If} $1 = 3 ;RunAs completed successfully, but with a non-admin user
+		MessageBox mb_YesNo|mb_IconExclamation|mb_TopMost|mb_SetForeground "This installer requires admin privileges, try again" /SD IDNO IDYES uac_tryagain IDNO 0
+	${EndIf}
+	;fall-through and die
+${Case} 1223
+	MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "This installer requires admin privileges, aborting!"
+	Quit
+${Case} 1062
+	MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Logon service not running, aborting!"
+	Quit
+${Default}
+	MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Unable to elevate , error $0"
+	Quit
+${EndSwitch}
   ; test existing ini file version
   ; if lower than build then use built in ini
   ifFileExists $EXEDIR\devkitProUpdate.ini +1 extractINI
@@ -989,7 +1012,7 @@ installing:
   GetTempFileName $mirrorINI $PLUGINSDIR
   File /oname=$mirrorINI "Dialogs\PickMirror.ini"
   GetTempFileName $finishINI $PLUGINSDIR
-  File /oname=$PLUGINSDIR\donate.bmp "Dialogs\donate.bmp"
+  ;File /oname=$PLUGINSDIR\donate.bmp "Dialogs\donate.bmp"
 
   IntCmp $Updating 1 +1 first_install
 
