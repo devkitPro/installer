@@ -8,15 +8,17 @@ RequestExecutionLevel user /* RequestExecutionLevel REQUIRED! */
 ; UAC         http://nsis.sourceforge.net/UAC_plug-in
 ; ZipDLL      http://nsis.sourceforge.net/ZipDLL_plug-in
 
+; NSIS large strings build from http://nsis.sourceforge.net/Special_Builds
+
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.5.1"
+!define PRODUCT_VERSION "1.5.3"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "42"
+!define BUILD "44"
 
 SetCompressor lzma
 
@@ -680,7 +682,6 @@ SkipPSPdocMenu:
   WriteUninstaller "$INSTDIR\uninst.exe"
   IntCmp $Updating 1 SkipInstall
 
-	MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "updating=$Updating"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninst.exe"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "InstallLocation" "$INSTDIR"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
@@ -695,13 +696,13 @@ SkipInstall:
   ReadRegStr $1 HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "PATH"
   ; remove it to avoid multiple paths with separate installs
   ${StrRep} $2 $1 "$INSTDIR\msys\bin;" ""
-  StrCpy $2 "$INSTDIR\msys\bin;$2"
   StrCmp $2 "" 0 WritePath
 
 	MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Trying to set path to blank string!$\nPlease add $INSTDIR\msys\bin; to the start of your path"
   goto AbortPath
 
 WritePath:
+  StrCpy $2 "$INSTDIR\msys\bin;$2"
   WriteRegExpandStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "PATH" $2
   SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 AbortPath:
@@ -1575,7 +1576,7 @@ FunctionEnd
 ;-----------------------------------------------------------------------------------------------------------------------
 Function WhyDonate
 ;-----------------------------------------------------------------------------------------------------------------------
-  ExecShell "open" "http://www.devkitpro.org/support-devkitpro/"
+  ExecShell "open" "http://devkitpro.org/support-devkitpro/"
 FunctionEnd
 
 ;-----------------------------------------------------------------------------------------------------------------------
