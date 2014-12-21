@@ -12,13 +12,13 @@ RequestExecutionLevel user /* RequestExecutionLevel REQUIRED! */
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.5.3"
+!define PRODUCT_VERSION "1.5.4"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "44"
+!define BUILD "45"
 
 SetCompressor lzma
 
@@ -172,6 +172,8 @@ var LIBGBA_FAT
 var LIBGBA_FAT_VER
 var LIBNDS
 var LIBNDS_VER
+var LIBCTRU
+var LIBCTRU_VER
 var DSWIFI
 var DSWIFI_VER
 var LIBNDS_FAT
@@ -215,7 +217,7 @@ var INSIGHT_VER
 
 var GCUBE
 var GCUBE_VER
-
+ 
 var BASEDIR
 var Updates
 
@@ -283,6 +285,10 @@ SectionGroup devkitARM SecdevkitARM
 	SectionEnd
 
 	Section "filesystem" filesystem
+          SectionIn 1 2
+	SectionEnd
+
+	Section "libctru" Seclibctru
           SectionIn 1 2
 	SectionEnd
 
@@ -358,6 +364,10 @@ Section -installComponents
 
   push ${Seclibnds}
   push $LIBNDS
+  Call DownloadIfNeeded
+
+  push ${Seclibctru}
+  push $LIBCTRU
   Call DownloadIfNeeded
 
   push ${Secdswifi}
@@ -557,6 +567,13 @@ SkipMsys:
   push $MAXMODDS_VER
   call ExtractLib
 
+  push ${Seclibctru}
+  push "libctru"
+  push $LIBCTRU
+  push "libctru"
+  push $LIBCTRU_VER
+  call ExtractLib
+
   push ${libogc}
   push "libogc"
   push $LIBOGC
@@ -750,6 +767,7 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibgbafat} "Nintendo GBA FAT library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibmirko} "Gamepark GP32 development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibnds} "Nintendo DS development library"
+  !insertmacro MUI_DESCRIPTION_TEXT ${Seclibctru} "Nintendo 3DS development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${maxmodds} "Nintendo DS audio library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Secdswifi} "Nintendo DS wifi library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibndsfat} "Nintendo DS FAT library"
@@ -902,6 +920,11 @@ installing:
   ReadINIStr $LIBNDS "$EXEDIR\devkitProUpdate.ini" "libnds" "File"
   ReadINIStr $LIBNDS_VER "$EXEDIR\devkitProUpdate.ini" "libnds" "Version"
   SectionSetSize ${Seclibnds} $R0
+
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libctru" "Size"
+  ReadINIStr $LIBCTRU "$EXEDIR\devkitProUpdate.ini" "libctru" "File"
+  ReadINIStr $LIBCTRU_VER "$EXEDIR\devkitProUpdate.ini" "libctru" "Version"
+  SectionSetSize ${Seclibctru} $R0
 
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "maxmodgba" "Size"
   ReadINIStr $MAXMODGBA "$EXEDIR\devkitProUpdate.ini" "maxmodgba" "File"
@@ -1118,6 +1141,13 @@ installing:
   push $0
   push $GP32EXAMPLES_VER
   push ${gp32examples}
+  call checkVersion
+
+  ReadINIStr $0 "$INSTDIR\installed.ini" "libctru" "Version"
+
+  push $0
+  push $LIBCTRU_VER
+  push ${Seclibctru}
   call checkVersion
 
   IntCmp $Updates 0 +1 dkARMupdates dkARMupdates
