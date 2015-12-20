@@ -111,6 +111,10 @@
   {
     mkdir("$dir/examples/gp32") or die $!;
   }
+  if(!(-d "$dir/examples/3ds"))
+  {
+    mkdir("$dir/examples/3ds") or die $!;
+  }
 
   # Grab update file
   if(-e "devkitProUpdate.ini")
@@ -139,6 +143,8 @@
       'defaultarm7'  => 0,
       'filesystem'   => 0,
       'libctru'      => 0,
+      'citro3d'      => 0,
+      '3dsexamples'  => 0,
     );
   my %newVersions = %versions;
 
@@ -237,6 +243,8 @@
       'defaultarm7'  => 'libnds',
       'filesystem'   => 'libnds',
       'libctru'      => 'libctru',
+      'citro3d'      => 'libctru',
+      '3dsexamples'  => 'examples/3ds',
     );
 
   foreach my $key (keys %updates)
