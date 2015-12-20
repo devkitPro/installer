@@ -12,13 +12,13 @@ RequestExecutionLevel user /* RequestExecutionLevel REQUIRED! */
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.5.4"
+!define PRODUCT_VERSION "1.6.0"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "45"
+!define BUILD "46"
 
 SetCompressor lzma
 
@@ -124,7 +124,7 @@ var ICONS_GROUP
 
 var INSTALL_ACTION
 ; Instfiles page
-!define MUI_PAGE_HEADER_SUBTEXT $INSTALL_ACTION 
+!define MUI_PAGE_HEADER_SUBTEXT $INSTALL_ACTION
 !define MUI_INSTFILESPAGE_ABORTHEADER_TEXT "Installation Aborted"
 !define MUI_INSTFILESPAGE_ABORTHEADER_SUBTEXT "The installation was not completed successfully."
 !insertmacro MUI_PAGE_INSTFILES
@@ -174,6 +174,10 @@ var LIBNDS
 var LIBNDS_VER
 var LIBCTRU
 var LIBCTRU_VER
+var CTREXAMPLES
+var CTREXAMPLES_VER
+var CITRO3D
+var CITRO3D_VER
 var DSWIFI
 var DSWIFI_VER
 var LIBNDS_FAT
@@ -217,7 +221,7 @@ var INSIGHT_VER
 
 var GCUBE
 var GCUBE_VER
- 
+
 var BASEDIR
 var Updates
 
@@ -292,6 +296,14 @@ SectionGroup devkitARM SecdevkitARM
           SectionIn 1 2
 	SectionEnd
 
+  Section "citro3d" Seccitro3d
+          SectionIn 1 2
+  SectionEnd
+
+  Section "3ds examples" Sec3dsexamples
+          SectionIn 1 2
+  SectionEnd
+
 SectionGroupEnd
 
 SectionGroup "devkitPPC" grpdevkitPPC
@@ -340,7 +352,7 @@ Section -installComponents
   StrCpy $R0 $INSTDIR 1
   StrLen $0 $INSTDIR
   IntOp $0 $0 - 2
-  
+
   StrCpy $R1 $INSTDIR $0 2
   ${StrRep} $R1 $R1 "\" "/"
   StrCpy $BASEDIR /$R0$R1
@@ -368,6 +380,10 @@ Section -installComponents
 
   push ${Seclibctru}
   push $LIBCTRU
+  Call DownloadIfNeeded
+
+  push ${Seccitro3d}
+  push $CITRO3D
   Call DownloadIfNeeded
 
   push ${Secdswifi}
@@ -410,6 +426,10 @@ Section -installComponents
   push $GP32EXAMPLES
   Call DownloadIfNeeded
 
+  push ${Sec3dsexamples}
+  push $CTREXAMPLES
+  Call DownloadIfNeeded
+
   push ${devkitPPC}
   push $DEVKITPPC
   Call DownloadIfNeeded
@@ -445,7 +465,7 @@ Section -installComponents
   push ${Secinsight}
   push $INSIGHT
   Call DownloadIfNeeded
-  
+
   push ${gcube}
   push $GCUBE
   Call DownloadIfNeeded
@@ -503,7 +523,7 @@ SkipMsys:
   push "libgba"
   push $LIBGBA_VER
   call ExtractLib
-  
+
   push ${Seclibgbafat}
   push "libgba"
   push $LIBGBA_FAT
@@ -574,6 +594,13 @@ SkipMsys:
   push $LIBCTRU_VER
   call ExtractLib
 
+  push ${Seccitro3d}
+  push "libctru"
+  push $CITRO3D
+  push "citro3d"
+  push $CITRO3D_VER
+  call ExtractLib
+
   push ${libogc}
   push "libogc"
   push $LIBOGC
@@ -587,6 +614,13 @@ SkipMsys:
   push "libogcfat"
   push $LIBOGC_FAT_VER
   call ExtractLib
+
+  push ${Sec3dsexamples}
+  push "examples\3ds"
+  push $CTREXAMPLES
+  push "3dsexamples"
+  push $CTREXAMPLES_VER
+  call ExtractExamples
 
   push ${ndsexamples}
   push "examples\nds"
@@ -743,7 +777,7 @@ Section Uninstall
   DeleteRegKey HKCR ".pnproj"
   DeleteRegKey HKCR "PN2.pnproj.1\shell\open\command"
   DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
-  
+
   DeleteRegValue HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "DEVKITPPC"
   DeleteRegValue HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "DEVKITPSP"
   DeleteRegValue HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "DEVKITARM"
@@ -768,12 +802,14 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibmirko} "Gamepark GP32 development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibnds} "Nintendo DS development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibctru} "Nintendo 3DS development library"
+  !insertmacro MUI_DESCRIPTION_TEXT ${Seccitro3d} "Nintendo 3DS gpu development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${maxmodds} "Nintendo DS audio library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Secdswifi} "Nintendo DS wifi library"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibndsfat} "Nintendo DS FAT library"
   !insertmacro MUI_DESCRIPTION_TEXT ${libogc} "Nintendo Wii and Gamecube development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${libogcfat} "Nintendo Gamecube/Wii FAT library"
   !insertmacro MUI_DESCRIPTION_TEXT ${ndsexamples} "Nintendo DS example code"
+  !insertmacro MUI_DESCRIPTION_TEXT ${Sec3dsexamples} "Nintendo 3DS example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${gbaexamples} "Nintendo GBA example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${gp32examples} "Gamepark GP32 example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${cubeexamples} "Nintendo Gamecube example code"
@@ -790,21 +826,6 @@ var finishINI
 ;-----------------------------------------------------------------------------------------------------------------------
 Function .onInit
 ;-----------------------------------------------------------------------------------------------------------------------
-/*  System::Call "kernel32::CreateMutexA(i 0, i 0, t '$(^Name)') i .r0 ?e"
-  Pop $0
-  StrCmp $0 0 launch
-  StrLen $0 "$(^Name)"
-  IntOp $0 $0 + 1
-loop:
-  FindWindow $1 '#32770' '' 0 $1
-  IntCmp $1 0 +4
-  System::Call "user32::GetWindowText(i r1, t .r2, i r0) i."
-  StrCmp $2 "$(^Name)" 0 loop
-  System::Call "user32::SetForegroundWindow(i r1) i."
-  System::Call "user32::ShowWindow(i r1,i 9) i."
-  Abort
-launch:
-*/
 uac_tryagain:
 !insertmacro UAC_RunElevated
 ${Switch} $0
@@ -879,7 +900,7 @@ gotINI:
 
   ReadRegStr $1 ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "InstallLocation"
   StrCmp $1 "" installing
-  
+
   StrCpy $INSTDIR $1
 
   ; if the user has deleted installed.ini then revert to first install mode
@@ -926,6 +947,11 @@ installing:
   ReadINIStr $LIBCTRU_VER "$EXEDIR\devkitProUpdate.ini" "libctru" "Version"
   SectionSetSize ${Seclibctru} $R0
 
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "citro3d" "Size"
+  ReadINIStr $CITRO3D "$EXEDIR\devkitProUpdate.ini" "citro3d" "File"
+  ReadINIStr $CITRO3D_VER "$EXEDIR\devkitProUpdate.ini" "citro3d" "Version"
+  SectionSetSize ${Seccitro3d} $R0
+
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "maxmodgba" "Size"
   ReadINIStr $MAXMODGBA "$EXEDIR\devkitProUpdate.ini" "maxmodgba" "File"
   ReadINIStr $MAXMODGBA_VER "$EXEDIR\devkitProUpdate.ini" "maxmodgba" "Version"
@@ -965,6 +991,11 @@ installing:
   ReadINIStr $NDSEXAMPLES "$EXEDIR\devkitProUpdate.ini" "ndsexamples" "File"
   ReadINIStr $NDSEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "ndsexamples" "Version"
   SectionSetSize ${ndsexamples} $R0
+
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "3dsexamples" "Size"
+  ReadINIStr $CTREXAMPLES "$EXEDIR\devkitProUpdate.ini" "3dsexamples" "File"
+  ReadINIStr $CTREXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "3dsexamples" "Version"
+  SectionSetSize ${Sec3dsexamples} $R0
 
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "defaultarm7" "Size"
   ReadINIStr $DEFAULT_ARM7 "$EXEDIR\devkitProUpdate.ini" "defaultarm7" "File"
@@ -1045,109 +1076,120 @@ installing:
   !insertmacro SetSectionFlag SecdevkitARM SF_EXPAND
   !insertmacro SetSectionFlag SecdevkitARM SF_TOGGLED
 
-  ReadINIStr $0 "$INSTDIR\installed.ini" "devkitARM" "Version"
-
-  push $0
+  push "devkitARM"
   push $DEVKITARM_VER
   push ${SecdkARM}
   call checkVersion
 
-  ReadINIStr $0 "$INSTDIR\installed.ini" "libmirko" "Version"
-
-  push $0
+  push "libmirko"
   push $LIBMIRKO_VER
   push ${Seclibmirko}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "libgba" "Version"
 
-  push $0
+  push "libgba"
   push $LIBGBA_VER
   push ${Seclibgba}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "libgbafat" "Version"
 
-  push $0
+  push "libgbafat"
   push $LIBGBA_FAT_VER
   push ${Seclibgbafat}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "maxmodgba" "Version"
 
-  push $0
+  push "maxmodgba"
   push $MAXMODGBA_VER
   push ${maxmodgba}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "libnds" "Version"
 
-  push $0
+  push "libnds"
   push $LIBNDS_VER
   push ${Seclibnds}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "maxmodds" "Version"
 
-  push $0
+  push "maxmodds"
   push $MAXMODDS_VER
   push ${maxmodds}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "dswifi" "Version"
 
-  push $0
+  push "dswifi"
   push $DSWIFI_VER
   push ${Secdswifi}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "libndsfat" "Version"
 
-  push $0
+  push "libndsfat"
   push $LIBNDS_FAT_VER
   push ${Seclibndsfat}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "ndsexamples" "Version"
 
-  push $0
+  push "ndsexamples"
   push $NDSEXAMPLES_VER
   push ${ndsexamples}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "defaultarm7" "Version"
 
-  push $0
+  push "defaultarm7"
   push $DEFAULT_ARM7_VER
   push ${defaultarm7}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "filesystem" "Version"
 
-  push $0
+  push "filesystem"
   push $FILESYSTEM_VER
   push ${filesystem}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "gbaexamples" "Version"
 
-  push $0
+  push "gbaexamples"
   push $GBAEXAMPLES_VER
   push ${gbaexamples}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "gp32examples" "Version"
 
-  push $0
+  push "gp32examples"
   push $GP32EXAMPLES_VER
   push ${gp32examples}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "libctru" "Version"
 
-  push $0
+  push "libctru"
   push $LIBCTRU_VER
   push ${Seclibctru}
+  call checkVersion
+
+
+  ReadINIStr $0 "$INSTDIR\installed.ini" "citro3d" "Version"
+
+  push "citro3d"
+  push $CITRO3D_VER
+  push ${Seccitro3d}
+  call checkVersion
+
+  ReadINIStr $0 "$INSTDIR\installed.ini" "3dsexamples" "Version"
+
+  push "3dsexamples"
+  push $CTREXAMPLES_VER
+  push ${Sec3dsexamples}
   call checkVersion
 
   IntCmp $Updates 0 +1 dkARMupdates dkARMupdates
@@ -1157,7 +1199,7 @@ installing:
 dkARMupdates:
   ReadINIStr $0 "$INSTDIR\installed.ini" "msys" "Version"
 
-  push $0
+  push "msys"
   push $MSYS_VER
   push ${SecMsys}
   call checkVersion
@@ -1165,42 +1207,42 @@ dkARMupdates:
   StrCpy $R2 $Updates
   ReadINIStr $0 "$INSTDIR\installed.ini" "devkitPPC" "Version"
 
-  push $0
+  push "devkitPPC"
   push $DEVKITPPC_VER
   push ${devkitPPC}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "libogc" "Version"
 
-  push $0
+  push "libogc"
   push $LIBOGC_VER
   push ${libogc}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "libogcfat" "Version"
 
-  push $0
+  push "libogcfat"
   push $LIBOGC_FAT_VER
   push ${libogcfat}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "cubeexamples" "Version"
 
-  push $0
+  push "cubeexamples"
   push $CUBEEXAMPLES_VER
   push ${cubeexamples}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "wiiexamples" "Version"
 
-  push $0
+  push "wiiexamples"
   push $WIIEXAMPLES_VER
   push ${wiiexamples}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "gcube" "Version"
 
-  push $0
+  push "gcube"
   push $GCUBE_VER
   push ${gcube}
   call checkVersion
@@ -1216,13 +1258,14 @@ dkPPCupdates:
   StrCpy $R2 $Updates
   ReadINIStr $0 "$INSTDIR\installed.ini" "devkitPSP" "Version"
 
-  push $0
+  push "devkitPSP"
   push $DEVKITPSP_VER
   push ${devkitPSP}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "pspdoc" "Version"
-  push $0
+
+  push "pspdoc"
   push $PSPDOC_VER
   push ${pspdoc}
   call checkVersion
@@ -1235,14 +1278,14 @@ dkPPCupdates:
 dkPSPupdates:
   ReadINIStr $0 "$INSTDIR\installed.ini" "pnotepad" "Version"
 
-  push $0
+  push "pnotepad"
   push $PNOTEPAD_VER
   push ${Pnotepad}
   call checkVersion
 
   ReadINIStr $0 "$INSTDIR\installed.ini" "insight" "Version"
 
-  push $0
+  push "insight"
   push $INSIGHT_VER
   push ${Secinsight}
   call checkVersion
@@ -1255,18 +1298,28 @@ var CurrentVer
 var InstalledVer
 var PackageSection
 var PackageFlags
+var key
+var isNew
+
 ;-----------------------------------------------------------------------------------------------------------------------
 Function checkVersion
 ;-----------------------------------------------------------------------------------------------------------------------
   pop $PackageSection
   pop $CurrentVer
-  pop $InstalledVer
-  
+  pop $key
+
+  ReadINIStr $InstalledVEr "$INSTDIR\installed.ini" "$key" "Version"
+
+  IntOp $isNew 0 + 0
+
   ; check for blank installed version
   StrLen $0 $InstalledVer
   IntCmp $0 0 +1 gotinstalled gotinstalled
-  
+
   StrCpy $InstalledVer 0
+  WriteINIStr $INSTDIR\installed.ini "$key" "Version" "0"
+
+  IntOp $isNew 0 + 1
 
 gotinstalled:
 
@@ -1277,12 +1330,16 @@ gotinstalled:
   IntOp $PackageFlags $PackageFlags & ${SECTION_OFF}
 
   StrCmp $CurrentVer $InstalledVer noupdate
-  
+
   Intop $Updates $Updates + 1
-  
+
+  IntCmp $isNew 1 selectit noselectit noselectit
+
+noselectit:
   ; don't select if not installed
   StrCmp $InstalledVer 0 done
-  
+
+selectit:
   IntOp $PackageFlags $PackageFlags | ${SF_SELECTED}
 
   Goto done
@@ -1309,15 +1366,20 @@ FunctionEnd
 Function un.onUninstSuccess
 ;-----------------------------------------------------------------------------------------------------------------------
   HideWindow
-  MessageBox MB_ICONINFORMATION|MB_OK "devkitPro was successfully removed from your computer."
+  MessageBox MB_ICONINFORMATION|MB_OK "All devkitPro packages were successfully removed from your computer."
 FunctionEnd
 
 ;-----------------------------------------------------------------------------------------------------------------------
 Function un.onInit
 ;-----------------------------------------------------------------------------------------------------------------------
-  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are you sure you want to completely remove devkitPro and all of its components?" IDYES +2
+  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are you sure you want to completely remove all devkitPro packages?" IDYES +2
   Abort
+
+  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are absolutely sure you want to do this?$\r$\nThis will remove the whole devkitPro folder and it's contents." IDYES +2
+  Abort
+
 FunctionEnd
+
 
 
 ;-----------------------------------------------------------------------------------------------------------------------
@@ -1354,7 +1416,7 @@ Function AbortComponents
   IntCmp $Updating 1 +1 ShowPage ShowPage
 
   IntCmp $Updates 0 +1 Showpage Showpage
-  
+
   StrCpy $FINISH_TEXT "${PRODUCT_NAME} found no updates to install."
   Abort
 
@@ -1394,9 +1456,9 @@ Function DownloadIfNeeded
 
   ifFileExists "$EXEDIR\$FileName" ThisFileFound
 
-  
+
   StrCpy $retry 3
-  
+
 retryLoop:
   inetc::get /RESUME "" "http://downloads.sourceforge.net/devkitpro/$FileName" "$EXEDIR\$FileName" /END
   Pop $0
@@ -1580,7 +1642,7 @@ Function ChooseMirrorPage
   StrCpy $FINISH_TEXT "${PRODUCT_NAME} has finished downloading the components you selected. To install the package please run the installer again and select the download and install option. To install on a machine with no net access copy all the files downloaded by this process, the installer will use the files in the same directory instead of downloading."
 
   Goto done
-  
+
 install:
   StrCpy $INSTALL_ACTION "Please wait while ${PRODUCT_NAME} downloads and installs the components you selected."
   StrCpy $FINISH_TITLE "Installation complete."
@@ -1631,7 +1693,7 @@ Function FinishPage
   SetCtlColors $R0 "" "${MUI_BGCOLOR}"
   CreateFont $R1 "$(^Font)" "12" "700"
   SendMessage $R0 ${WM_SETFONT} $R1 0
-  
+
   ${NSD_CreateLabel} 120u 50u -1u 10u "$FINISH_TEXT"
   Pop $R0
   SetCtlColors $R0 "" "${MUI_BGCOLOR}"
