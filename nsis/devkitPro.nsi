@@ -477,8 +477,6 @@ Section -installComponents
   IntCmp $Updating 1 test_Msys +1 +1
 
   CreateDirectory $INSTDIR
-  File /oname=$INSTDIR\installed.ini INIfiles\installed.ini
-
 
 test_Msys:
   !insertmacro SectionFlagIsSet ${SecMsys} ${SF_SELECTED} install_Msys SkipMsys
