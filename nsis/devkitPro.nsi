@@ -1065,7 +1065,6 @@ installing:
   GetTempFileName $mirrorINI $PLUGINSDIR
   File /oname=$mirrorINI "Dialogs\PickMirror.ini"
   GetTempFileName $finishINI $PLUGINSDIR
-  ;File /oname=$PLUGINSDIR\donate.bmp "Dialogs\donate.bmp"
 
   IntCmp $Updating 1 +1 first_install
 
@@ -1657,12 +1656,36 @@ done:
 
 FunctionEnd
 
+var donation
+
 ;-----------------------------------------------------------------------------------------------------------------------
 Function Donate
 ;-----------------------------------------------------------------------------------------------------------------------
-  ExecShell "open" "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=donations%40devkitpro%2eorg&item_name=devkitPro%20donation&item_number=002&amount=5%2e00&no_shipping=0&return=http%3a%2f%2fwww%2edevkitpro%2eorg%2fthanks%2ephp&cancel_return=http%3a%2f%2fwww%2edevkitpro%2eorg%2fsupport%2ddevkitpro%2f&tax=0&currency_code=USD&bn=PP%2dDonationsBF&charset=UTF%2d8"
+  pop $donation
+  ExecShell "open" "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=donations%40devkitpro%2eorg&item_name=devkitPro%20donation&item_number=002&amount=$donation%2e00&no_shipping=0&return=http%3a%2f%2fwww%2edevkitpro%2eorg%2fthanks%2ephp&cancel_return=http%3a%2f%2fwww%2edevkitpro%2eorg%2fsupport%2ddevkitpro%2f&tax=0&currency_code=USD&bn=PP%2dDonationsBF&charset=UTF%2d8"
 FunctionEnd
 
+
+;-----------------------------------------------------------------------------------------------------------------------
+Function Donate5
+;-----------------------------------------------------------------------------------------------------------------------
+  push 5
+  call Donate
+FunctionEnd
+
+;-----------------------------------------------------------------------------------------------------------------------
+Function Donate10
+;-----------------------------------------------------------------------------------------------------------------------
+  push 10
+  call Donate
+FunctionEnd
+
+;-----------------------------------------------------------------------------------------------------------------------
+Function Donate20
+;-----------------------------------------------------------------------------------------------------------------------
+  push 20
+  call Donate
+FunctionEnd
 ;-----------------------------------------------------------------------------------------------------------------------
 Function WhyDonate
 ;-----------------------------------------------------------------------------------------------------------------------
@@ -1699,17 +1722,30 @@ Function FinishPage
   IntCmp $Updating 1 +1 ShowPage ShowPage
   IntCmp $Updates 0 Showpage +1 +1
 
-  ${NSD_CreateLabel} 134u 120u 162u 12u "Help keep devkitPro toolchains free"
+  ${NSD_CreateLabel} 140u 120u 162u 12u "Help keep devkitPro toolchains free"
   Pop $R0
   SetCtlColors $R0 "000080" "FFFFFF"
   CreateFont $R1 "(^Font)" "10" "700"
   SendMessage $R0 ${WM_SETFONT} $R1 1
 
-  ${NSD_CreateButton} 164u 134u 102u 18u "Donate $$5 now"
+  ${NSD_CreateButton} 120u 134u 50u 18u "$$5"
   pop $R0
   CreateFont $R1 "(^Font)" "12" "700"
   SendMessage $R0 ${WM_SETFONT} $R1 1
-  ${NSD_OnClick} $R0 Donate
+  ${NSD_OnClick} $R0 Donate5
+
+  ${NSD_CreateButton} 190u 134u 50u 18u "$$10"
+  pop $R0
+  CreateFont $R1 "(^Font)" "12" "700"
+  SendMessage $R0 ${WM_SETFONT} $R1 1
+  ${NSD_OnClick} $R0 Donate10
+
+  ${NSD_CreateButton} 260u 134u 50u 18u "$$20"
+  pop $R0
+  CreateFont $R1 "(^Font)" "12" "700"
+  SendMessage $R0 ${WM_SETFONT} $R1 1
+  ${NSD_OnClick} $R0 Donate20
+
 
   ${NSD_CreateLink} 190u 154u 76u 12u "Why Donate?"
   pop $R0
