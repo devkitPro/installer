@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #-----------------------------------------------------------------------------
 #
-#	Copyright (C) 2011
+#	Copyright (C) 2011 - 2016
 #		Michael Theall (mtheall)
 #		Dave Murphy (WinterMute)
 #
