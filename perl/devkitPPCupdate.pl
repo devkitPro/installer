@@ -62,7 +62,7 @@
 	$downloader = "wget -q";
 	$archname = $arch . "-linux";
   }
-  elsif($os eq "Darwin" and $arch eq "i386")
+  elsif($os eq "Darwin" and ($arch eq "i686" or $arch eq "x86_64"))
   {
 	$downloader = "curl -L -O -s";
 	$archname = "i386-osx";
