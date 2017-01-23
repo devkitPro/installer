@@ -62,14 +62,14 @@
   $downloader = "wget -q";
   $archname = $arch . "-linux";
   }
-  elsif($os eq "Darwin" and ($arch eq "i686" or $arch eq "x86_64"))
+  elsif($os eq "Darwin" and ($arch eq "i386" or $arch eq "x86_64"))
   {
   $downloader = "curl -L -O -s";
   $archname = "i386-osx";
   }
   else
   {
-    printf(STDERR "Not on Linux i686/x86_64 or Darwin!\n");
+    printf(STDERR "Not on Linux i686/x86_64 or Darwin i386/x86_64!\n");
     exit(1);
   }
 
