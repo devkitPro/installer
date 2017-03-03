@@ -59,13 +59,13 @@
   # Check OS information
   if($os eq "Linux" and ($arch eq "i686" or $arch eq "x86_64"))
   {
-	$downloader = "wget -q";
-	$archname = $arch . "-linux";
+	 $downloader = "wget -q";
+	 $archname = $arch . "-linux";
   }
   elsif($os eq "Darwin" and ($arch eq "i386" or $arch eq "x86_64"))
   {
-	$downloader = "curl -L -O -s";
-	$archname = "i386-osx";
+	 $downloader = "curl -L -O -s";
+	 $archname = $arch . "-osx";
   }
   else
   {
