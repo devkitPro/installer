@@ -12,13 +12,13 @@ RequestExecutionLevel user /* RequestExecutionLevel REQUIRED! */
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.7.0"
+!define PRODUCT_VERSION "2.0.0"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "47"
+!define BUILD "48"
 
 SetCompressor lzma
 
@@ -196,6 +196,8 @@ var DEFAULT_ARM7
 var DEFAULT_ARM7_VER
 var FILESYSTEM
 var FILESYSTEM_VER
+var LIBMIRKO
+var LIBMIRKO_VER
 
 var DEVKITPPC
 var DEVKITPPC_VER
@@ -208,8 +210,13 @@ var LIBOGC_VER
 var LIBOGC_FAT
 var LIBOGC_FAT_VER
 
-var LIBMIRKO
-var LIBMIRKO_VER
+var DEVKITA64
+var DEVKITA64_VER
+var LIBNX
+var LIBNX_VER
+var SWITCHEXAMPLES
+var SWITCHEXAMPLES_VER
+
 var PNOTEPAD
 var PNOTEPAD_VER
 
@@ -219,6 +226,7 @@ var Updates
 InstType "Full"
 InstType "devkitARM"
 InstType "devkitPPC"
+InstType "devkitA64"
 
 Section "Minimal System" SecMsys
     SectionIn 1 2 3 4
@@ -314,6 +322,18 @@ SectionGroup "devkitPPC" grpdevkitPPC
   SectionEnd
 SectionGroupEnd
 
+SectionGroup "devkitA64" grpdevkitA64
+  Section "devkitA64" devkitA64
+    SectionIn 1 4
+  SectionEnd
+  Section "libnx" libnx
+    SectionIn 1 4
+  SectionEnd
+  Section "Switch examples" switchexamples
+    SectionIn 1 4
+  SectionEnd
+SectionGroupEnd
+
 Section "Programmer's Notepad" Pnotepad
   SectionIn 1 2 3 4
 SectionEnd
@@ -329,7 +349,6 @@ Section -installComponents
   StrCpy $R1 $INSTDIR $0 2
   ${StrRep} $R1 $R1 "\" "/"
   StrCpy $BASEDIR /$R0$R1
-
 
   push ${SecMsys}
   push $MSYS
@@ -423,6 +442,18 @@ Section -installComponents
   push $WIIEXAMPLES
   Call DownloadIfNeeded
 
+  push ${devkitA64}
+  push $DEVKITA64
+  Call DownloadIfNeeded
+
+  push ${libnx}
+  push $LIBNX
+  Call DownloadIfNeeded
+
+  push ${switchexamples}
+  push $SWITCHEXAMPLES
+  Call DownloadIfNeeded
+
   push ${pnotepad}
   push $PNOTEPAD
   Call DownloadIfNeeded
@@ -461,6 +492,15 @@ SkipMsys:
   push "devkitPPC"
   push $DEVKITPPC_VER
   push 1
+  call ExtractToolChain
+
+  push ${devkitA64}
+  push "DEVKITA64"
+  push $DEVKITA64
+  push "$BASEDIR/devkitA64"
+  push "devkitA64"
+  push $DEVKITA64_VER
+  push 0
   call ExtractToolChain
 
   push ${Seclibgba}
@@ -603,6 +643,20 @@ SkipMsys:
   push $WIIEXAMPLES_VER
   call ExtractExamples
 
+  push ${libnx}
+  push "libnx"
+  push $LIBNX
+  push "libnx"
+  push $LIBNX_VER
+  call ExtractLib
+
+  push ${switchexamples}
+  push "examples\switch"
+  push $SWITCHEXAMPLES
+  push "switchexamples"
+  push $SWITCHEXAMPLES_VER
+  call ExtractExamples
+
   SectionGetFlags ${Pnotepad} $R0
   IntOp $R0 $R0 & ${SF_SELECTED}
   IntCmp $R0 ${SF_SELECTED} +1 SkipPnotepad
@@ -642,7 +696,6 @@ CheckPN2:
   SetOutPath "$INSTDIR\Programmers Notepad"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Programmers Notepad.lnk" "$INSTDIR\Programmers Notepad\pn.exe"
 SkipPN2Menu:
-  CreateDirectory "$SMPROGRAMS\$ICONS_GROUP\documentation"
   SetOutPath $INSTDIR
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Update.lnk" "$INSTDIR\$R1"
   !insertmacro MUI_STARTMENU_WRITE_END
@@ -653,7 +706,6 @@ SkipPN2Menu:
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "InstallLocation" "$INSTDIR"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
-
 
 SkipInstall:
   WriteRegStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "DEVKITPRO" "$BASEDIR"
@@ -709,6 +761,7 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${SecdevkitARM} "toolchain for ARM platforms"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecdkARM} "toolchain for ARM platforms"
   !insertmacro MUI_DESCRIPTION_TEXT ${devkitPPC} "toolchain for powerpc platforms"
+  !insertmacro MUI_DESCRIPTION_TEXT ${devkitA64} "toolchain for aarch64 platforms"
   !insertmacro MUI_DESCRIPTION_TEXT ${Pnotepad} "a programmer's editor"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibgba} "Nintendo GBA development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${maxmodgba} "Nintendo GBA audio library"
@@ -729,11 +782,12 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${cubeexamples} "Nintendo Gamecube example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${wiiexamples} "Nintendo Wii example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${defaultarm7} "default Nintendo DS arm7 core"
+  !insertmacro MUI_DESCRIPTION_TEXT ${libnx} "Nintendo Switch development library"
+  !insertmacro MUI_DESCRIPTION_TEXT ${switchexamples} "Nintendo Switch example code"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 var keepINI
 var mirrorINI
-var finishINI
 
 ;-----------------------------------------------------------------------------------------------------------------------
 Function .onInit
@@ -944,6 +998,21 @@ installing:
   ReadINIStr $WIIEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "wiiexamples" "Version"
   SectionSetSize ${wiiexamples} $R0
 
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitA64" "Size"
+  ReadINIStr $DEVKITA64 "$EXEDIR\devkitProUpdate.ini" "devkitA64" "File"
+  ReadINIStr $DEVKITA64_VER "$EXEDIR\devkitProUpdate.ini" "devkitA64" "Version"
+  SectionSetSize ${devkitA64} $R0
+
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libnx" "Size"
+  ReadINIStr $LIBNX "$EXEDIR\devkitProUpdate.ini" "libnx" "File"
+  ReadINIStr $LIBNX_VER "$EXEDIR\devkitProUpdate.ini" "libnx" "Version"
+  SectionSetSize ${libnx} $R0
+
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "switchexamples" "Size"
+  ReadINIStr $SWITCHEXAMPLES "$EXEDIR\devkitProUpdate.ini" "switchexamples" "File"
+  ReadINIStr $SWITCHEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "switchexamples" "Version"
+  SectionSetSize ${switchexamples} $R0
+
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "pnotepad" "Size"
   ReadINIStr $PNOTEPAD "$EXEDIR\devkitProUpdate.ini" "pnotepad" "File"
   ReadINIStr $PNOTEPAD_VER "$EXEDIR\devkitProUpdate.ini" "pnotepad" "Version"
@@ -956,7 +1025,6 @@ installing:
 
   GetTempFileName $mirrorINI $PLUGINSDIR
   File /oname=$mirrorINI "Dialogs\PickMirror.ini"
-  GetTempFileName $finishINI $PLUGINSDIR
 
   IntCmp $Updating 1 +1 first_install
 
@@ -975,106 +1043,75 @@ installing:
   push ${Seclibmirko}
   call checkVersion
 
-  ReadINIStr $0 "$INSTDIR\installed.ini" "libgba" "Version"
-
   push "libgba"
   push $LIBGBA_VER
   push ${Seclibgba}
   call checkVersion
-
-  ReadINIStr $0 "$INSTDIR\installed.ini" "libgbafat" "Version"
 
   push "libgbafat"
   push $LIBGBA_FAT_VER
   push ${Seclibgbafat}
   call checkVersion
 
-  ReadINIStr $0 "$INSTDIR\installed.ini" "maxmodgba" "Version"
-
   push "maxmodgba"
   push $MAXMODGBA_VER
   push ${maxmodgba}
   call checkVersion
-
-  ReadINIStr $0 "$INSTDIR\installed.ini" "libnds" "Version"
 
   push "libnds"
   push $LIBNDS_VER
   push ${Seclibnds}
   call checkVersion
 
-  ReadINIStr $0 "$INSTDIR\installed.ini" "maxmodds" "Version"
-
   push "maxmodds"
   push $MAXMODDS_VER
   push ${maxmodds}
   call checkVersion
-
-  ReadINIStr $0 "$INSTDIR\installed.ini" "dswifi" "Version"
 
   push "dswifi"
   push $DSWIFI_VER
   push ${Secdswifi}
   call checkVersion
 
-  ReadINIStr $0 "$INSTDIR\installed.ini" "libndsfat" "Version"
-
   push "libndsfat"
   push $LIBNDS_FAT_VER
   push ${Seclibndsfat}
   call checkVersion
-
-  ReadINIStr $0 "$INSTDIR\installed.ini" "ndsexamples" "Version"
 
   push "ndsexamples"
   push $NDSEXAMPLES_VER
   push ${ndsexamples}
   call checkVersion
 
-  ReadINIStr $0 "$INSTDIR\installed.ini" "defaultarm7" "Version"
-
   push "defaultarm7"
   push $DEFAULT_ARM7_VER
   push ${defaultarm7}
   call checkVersion
-
-  ReadINIStr $0 "$INSTDIR\installed.ini" "filesystem" "Version"
 
   push "filesystem"
   push $FILESYSTEM_VER
   push ${filesystem}
   call checkVersion
 
-  ReadINIStr $0 "$INSTDIR\installed.ini" "gbaexamples" "Version"
-
   push "gbaexamples"
   push $GBAEXAMPLES_VER
   push ${gbaexamples}
   call checkVersion
-
-  ReadINIStr $0 "$INSTDIR\installed.ini" "gp32examples" "Version"
 
   push "gp32examples"
   push $GP32EXAMPLES_VER
   push ${gp32examples}
   call checkVersion
 
-  ReadINIStr $0 "$INSTDIR\installed.ini" "libctru" "Version"
-
   push "libctru"
   push $LIBCTRU_VER
   push ${Seclibctru}
   call checkVersion
 
-
-  ReadINIStr $0 "$INSTDIR\installed.ini" "citro3d" "Version"
-
   push "citro3d"
   push $CITRO3D_VER
   push ${Seccitro3d}
   call checkVersion
-
-  ReadINIStr $0 "$INSTDIR\installed.ini" "3dsexamples" "Version"
 
   push "3dsexamples"
   push $CTREXAMPLES_VER
@@ -1086,7 +1123,6 @@ installing:
   SectionSetText ${SecdevkitARM} ""
 
 dkARMupdates:
-  ReadINIStr $0 "$INSTDIR\installed.ini" "msys" "Version"
 
   push "msys"
   push $MSYS_VER
@@ -1101,28 +1137,20 @@ dkARMupdates:
   push ${devkitPPC}
   call checkVersion
 
-  ReadINIStr $0 "$INSTDIR\installed.ini" "libogc" "Version"
-
   push "libogc"
   push $LIBOGC_VER
   push ${libogc}
   call checkVersion
-
-  ReadINIStr $0 "$INSTDIR\installed.ini" "libogcfat" "Version"
 
   push "libogcfat"
   push $LIBOGC_FAT_VER
   push ${libogcfat}
   call checkVersion
 
-  ReadINIStr $0 "$INSTDIR\installed.ini" "cubeexamples" "Version"
-
   push "cubeexamples"
   push $CUBEEXAMPLES_VER
   push ${cubeexamples}
   call checkVersion
-
-  ReadINIStr $0 "$INSTDIR\installed.ini" "wiiexamples" "Version"
 
   push "wiiexamples"
   push $WIIEXAMPLES_VER
@@ -1135,8 +1163,29 @@ dkARMupdates:
   SectionSetText ${grpdevkitPPC} ""
 
 dkPPCupdates:
+  StrCpy $R2 $Updates
 
-  ReadINIStr $0 "$INSTDIR\installed.ini" "pnotepad" "Version"
+  push "devkitA64"
+  push $DEVKITA64_VER
+  push ${devkitA64}
+  call checkVersion
+
+  push "libnx"
+  push $LIBNX_VER
+  push ${libnx}
+  call checkVersion
+
+  push "switchexamples"
+  push $SWITCHEXAMPLES_VER
+  push ${switchexamples}
+  call checkVersion
+
+  IntOp $R1 $Updates - $R2
+  IntCmp $R1 0 +1 dkA64updates dkA64updates
+
+  SectionSetText ${grpdevkitA64} ""
+
+dkA64updates:
 
   push "pnotepad"
   push $PNOTEPAD_VER
@@ -1313,7 +1362,7 @@ Function DownloadIfNeeded
   StrCpy $retry 3
 
 retryLoop:
-  inetc::get /RESUME "" "http://downloads.sourceforge.net/devkitpro/$FileName" "$EXEDIR\$FileName" /END
+  inetc::get /RESUME "" "https://downloads.devkitpro.org/$FileName" "$EXEDIR\$FileName" /END
   Pop $0
   StrCmp $0 "OK" ThisFileFound
 

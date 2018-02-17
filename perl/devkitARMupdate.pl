@@ -219,7 +219,7 @@
       unlink($updates{$key});
     }
 
-    my $cmd = sprintf("%s http://download.sourceforge.net/devkitpro/%s", $downloader, $updates{$key});
+    my $cmd = sprintf("%s http://downloads.devkitpro.org/%s", $downloader, $updates{$key});
     printf("  Downloading...");
     system($cmd) and die "Failed to download $updates{$key}\n";
     printf("OK!\n");

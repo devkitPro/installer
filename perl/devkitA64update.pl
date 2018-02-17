@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #-----------------------------------------------------------------------------
 #
-#	Copyright (C) 2011 - 2016
+#	Copyright (C) 2011 - 2018
 #		Michael Theall (mtheall)
 #		Dave Murphy (WinterMute)
 #
@@ -57,19 +57,19 @@
   chomp($arch);
 
   # Check OS information
-  if($os eq "Linux" and ($arch eq "i686" or $arch eq "x86_64"))
+  if($os eq "Linux" and $arch eq "x86_64")
   {
 	 $downloader = "wget -q";
 	 $archname = $arch . "-linux";
   }
-  elsif($os eq "Darwin" and ($arch eq "i386" or $arch eq "x86_64"))
+  elsif($os eq "Darwin" and $arch eq "x86_64")
   {
 	 $downloader = "curl -L -O -s";
 	 $archname = $arch . "-osx";
   }
   else
   {
-    printf(STDERR "Not on Linux i686/x86_64 or Darwin i386/x86_64!\n");
+    printf(STDERR "Not on Linux or OSX x86_64!\n");
     exit(1);
   }
 
@@ -79,21 +79,17 @@
     mkdir("$dir") or die $!;
   }
 
-  if(!(-d "$dir/libogc"))
+  if(!(-d "$dir/libnx"))
   {
-    mkdir("$dir/libogc") or die $!;
+    mkdir("$dir/libnx") or die $!;
   }
   if(!(-d "$dir/examples"))
   {
     mkdir("$dir/examples") or die $!;
   }
-  if(!(-d "$dir/examples/wii"))
+  if(!(-d "$dir/examples/switch"))
   {
-    mkdir("$dir/examples/wii") or die $!;
-  }
-  if(!(-d "$dir/examples/gamecube"))
-  {
-    mkdir("$dir/examples/gamecube") or die $!;
+    mkdir("$dir/examples/switch") or die $!;
   }
 
   # Grab update file
@@ -102,26 +98,24 @@
 	unlink("devkitProUpdate.ini") or die $!;
   }
   printf("Downloading update file...");
-  system($downloader . " http://downloads.devkitpro.org/devkitProUpdate.ini") and die "Failed to download!";
+  system($downloader . " http://devkitpro.sourceforge.net/devkitProUpdate.ini") and die "Failed to download!";
   printf("OK!\n");
 
   # Initialize versions & newVersions
   my %versions =
     (
-      'devkitPPC'    => 0,
-      'libogc'       => 0,
-      'libogcfat'    => 0,
-      'wiiexamples'  => 0,
-      'cubeexamples' => 0,
+      'devkitA64'    => 0,
+      'libnx'       => 0,
+      'switchexamples' => 0,
     );
   my %newVersions = %versions;
 
   my %files    = ();
   my $current  = "";
 
-  if(-e "$dir/dkppc-update.ini")
+  if(-e "$dir/dka64-update.ini")
   {
-    open(MYFILE, "<$dir/dkppc-update.ini") or die $!;
+    open(MYFILE, "<$dir/dka64-update.ini") or die $!;
     while(<MYFILE>)
     {
       chomp;
@@ -169,7 +163,7 @@
   {
     if($versions{$key} ne $newVersions{$key} and $newVersions{$key} ne 0)
     {
-      $newFiles{$key} =~ s/win32\.exe/$archname.tar.bz2/;
+      $newFiles{$key} =~ s/win64\.exe/$archname.tar.xz/;
       $updates{$key} = $newFiles{$key};
     }
     else
@@ -196,23 +190,21 @@
   # Install files
   my %install =
     (
-      'devkitPPC'    => '',
-      'libogc'       => 'libogc',
-      'libogcfat'    => 'libogc',
-      'wiiexamples'  => 'examples/wii',
-      'cubeexamples' => 'examples/gamecube',
+      'devkitA64'    => '',
+      'libnx'       => 'libnx',
+      'switchexamples' => 'examples/switch',
     );
 
   foreach my $key (keys %updates)
   {
-    my $cmd = sprintf("tar -xjf %s -C $dir/%s", $updates{$key}, $install{$key});
+    my $cmd = sprintf("tar -xf %s -C $dir/%s", $updates{$key}, $install{$key});
     printf("Extracting %s...", $updates{$key});
     system($cmd) and die "Failed\n";
     printf("OK!\n");
   }
 
   # Output update info
-  open(MYFILE, ">$dir/dkppc-update.ini") or die $!;
+  open(MYFILE, ">$dir/dka64-update.ini") or die $!;
   foreach my $key (keys %newVersions)
   {
     printf(MYFILE "[%s]\n", $key);
@@ -229,18 +221,6 @@
   if($env ne "$dir")
   {
     printf("Please set DEVKITPRO in your environment as $dir\n");
-  }
-  else
-  {
-    printf("OK!\n");
-  }
-
-  printf("Checking DEVKITPPC...");
-  $env = `echo \$DEVKITPPC`;
-  chomp($env);
-  if($env ne "$dir/devkitPPC")
-  {
-    printf("Please set DEVKITPPC in your environment as \${DEVKITPRO}/devkitPPC\n");
   }
   else
   {
