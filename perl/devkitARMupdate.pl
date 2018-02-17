@@ -122,7 +122,7 @@
   unlink("devkitProUpdate.ini") or die $!;
   }
   printf("Downloading update file...");
-  system($downloader . " http://devkitpro.sourceforge.net/devkitProUpdate.ini") and die "Failed to download!";
+  system($downloader . " http://downloads.devkitpro.org/devkitProUpdate.ini") and die "Failed to download!";
   printf("OK!\n");
 
   # Initialize versions & newVersions
