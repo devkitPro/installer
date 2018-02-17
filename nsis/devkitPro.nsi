@@ -208,19 +208,10 @@ var LIBOGC_VER
 var LIBOGC_FAT
 var LIBOGC_FAT_VER
 
-var DEVKITPSP
-var DEVKITPSP_VER
-var PSPDOC
-var PSPDOC_VER
 var LIBMIRKO
 var LIBMIRKO_VER
 var PNOTEPAD
 var PNOTEPAD_VER
-var INSIGHT
-var INSIGHT_VER
-
-var GCUBE
-var GCUBE_VER
 
 var BASEDIR
 var Updates
@@ -321,19 +312,11 @@ SectionGroup "devkitPPC" grpdevkitPPC
   Section "Wii examples" wiiexamples
     SectionIn 1 3
   SectionEnd
-  Section "Gcube" gcube
-    SectionIn 1 3
-  SectionEnd
 SectionGroupEnd
 
 Section "Programmer's Notepad" Pnotepad
   SectionIn 1 2 3 4
 SectionEnd
-
-Section "Insight" Secinsight
-  SectionIn 1
-SectionEnd
-
 
 Section -installComponents
 
@@ -442,14 +425,6 @@ Section -installComponents
 
   push ${pnotepad}
   push $PNOTEPAD
-  Call DownloadIfNeeded
-
-  push ${Secinsight}
-  push $INSIGHT
-  Call DownloadIfNeeded
-
-  push ${gcube}
-  push $GCUBE
   Call DownloadIfNeeded
 
   SetDetailsView show
@@ -628,23 +603,6 @@ SkipMsys:
   push $WIIEXAMPLES_VER
   call ExtractExamples
 
-  push ${gcube}
-  push "emulators"
-  push $GCUBE
-  push "gcube"
-  push $GCUBE_VER
-  call ExtractLib
-
-  !insertmacro SectionFlagIsSet ${Secinsight} ${SF_SELECTED} +1 SkipInsight
-
-  RMDir /r "$INSTDIR/Insight"
-
-  ExecWait '"$EXEDIR/$INSIGHT" -y -o$INSTDIR'
-  WriteINIStr $INSTDIR\installed.ini insight Version $INSIGHT_VER
-  push $INSIGHT
-  call RemoveFile
-
-SkipInsight:
   SectionGetFlags ${Pnotepad} $R0
   IntOp $R0 $R0 & ${SF_SELECTED}
   IntCmp $R0 ${SF_SELECTED} +1 SkipPnotepad
@@ -770,8 +728,6 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${gp32examples} "Gamepark GP32 example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${cubeexamples} "Nintendo Gamecube example code"
   !insertmacro MUI_DESCRIPTION_TEXT ${wiiexamples} "Nintendo Wii example code"
-  !insertmacro MUI_DESCRIPTION_TEXT ${Secinsight} "GUI debugger"
-  !insertmacro MUI_DESCRIPTION_TEXT ${gcube} "Gamecube emulator"
   !insertmacro MUI_DESCRIPTION_TEXT ${defaultarm7} "default Nintendo DS arm7 core"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
@@ -988,23 +944,12 @@ installing:
   ReadINIStr $WIIEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "wiiexamples" "Version"
   SectionSetSize ${wiiexamples} $R0
 
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "gcube" "Size"
-  ReadINIStr $GCUBE "$EXEDIR\devkitProUpdate.ini" "gcube" "File"
-  ReadINIStr $GCUBE_VER "$EXEDIR\devkitProUpdate.ini" "gcube" "Version"
-  SectionSetSize ${gcube} $R0
-
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "pnotepad" "Size"
   ReadINIStr $PNOTEPAD "$EXEDIR\devkitProUpdate.ini" "pnotepad" "File"
   ReadINIStr $PNOTEPAD_VER "$EXEDIR\devkitProUpdate.ini" "pnotepad" "Version"
   SectionSetSize ${Pnotepad} $R0
 
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "insight" "Size"
-  ReadINIStr $INSIGHT "$EXEDIR\devkitProUpdate.ini" "insight" "File"
-  ReadINIStr $INSIGHT_VER "$EXEDIR\devkitProUpdate.ini" "insight" "Version"
-  SectionSetSize ${Secinsight} $R0
-
   !insertmacro INSTALLOPTIONS_EXTRACT_AS "Dialogs\PickMirror.ini" "PickMirror.ini"
-
 
   GetTempFileName $keepINI $PLUGINSDIR
   File /oname=$keepINI "Dialogs\keepfiles.ini"
@@ -1184,14 +1129,6 @@ dkARMupdates:
   push ${wiiexamples}
   call checkVersion
 
-  ReadINIStr $0 "$INSTDIR\installed.ini" "gcube" "Version"
-
-  push "gcube"
-  push $GCUBE_VER
-  push ${gcube}
-  call checkVersion
-
-
   IntOp $R1 $Updates - $R2
   IntCmp $R1 0 +1 dkPPCupdates dkPPCupdates
 
@@ -1204,13 +1141,6 @@ dkPPCupdates:
   push "pnotepad"
   push $PNOTEPAD_VER
   push ${Pnotepad}
-  call checkVersion
-
-  ReadINIStr $0 "$INSTDIR\installed.ini" "insight" "Version"
-
-  push "insight"
-  push $INSIGHT_VER
-  push ${Secinsight}
   call checkVersion
 
 first_install:
