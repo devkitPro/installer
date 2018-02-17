@@ -12,13 +12,13 @@ RequestExecutionLevel user /* RequestExecutionLevel REQUIRED! */
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "1.6.0"
+!define PRODUCT_VERSION "1.7.0"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "46"
+!define BUILD "47"
 
 SetCompressor lzma
 
@@ -228,7 +228,6 @@ var Updates
 InstType "Full"
 InstType "devkitARM"
 InstType "devkitPPC"
-InstType "devkitPSP"
 
 Section "Minimal System" SecMsys
     SectionIn 1 2 3 4
@@ -324,15 +323,6 @@ SectionGroup "devkitPPC" grpdevkitPPC
   SectionEnd
   Section "Gcube" gcube
     SectionIn 1 3
-  SectionEnd
-SectionGroupEnd
-
-SectionGroup "devkitPSP" grpdevkitPSP
-  Section "devkitPSP" devkitPSP
-    SectionIn 1 4
-  SectionEnd
-  Section "psp sdk documentation" pspdoc
-    SectionIn 1 4
   SectionEnd
 SectionGroupEnd
 
@@ -450,14 +440,6 @@ Section -installComponents
   push $WIIEXAMPLES
   Call DownloadIfNeeded
 
-  push ${devkitPSP}
-  push $DEVKITPSP
-  Call DownloadIfNeeded
-
-  push ${pspdoc}
-  push $PSPDOC
-  Call DownloadIfNeeded
-
   push ${pnotepad}
   push $PNOTEPAD
   Call DownloadIfNeeded
@@ -504,15 +486,6 @@ SkipMsys:
   push "devkitPPC"
   push $DEVKITPPC_VER
   push 1
-  call ExtractToolChain
-
-  push ${devkitPSP}
-  push "DEVKITPSP"
-  push $DEVKITPSP
-  push "$BASEDIR/devkitPSP"
-  push "devkitPSP"
-  push $DEVKITPSP_VER
-  push 0
   call ExtractToolChain
 
   push ${Seclibgba}
@@ -655,14 +628,6 @@ SkipMsys:
   push $WIIEXAMPLES_VER
   call ExtractExamples
 
-
-  push ${pspdoc}
-  push "doc\pspsdk"
-  push $PSPDOC
-  push "pspdoc"
-  push $PSPDOC_VER
-  call ExtractLib
-
   push ${gcube}
   push "emulators"
   push $GCUBE
@@ -720,11 +685,6 @@ CheckPN2:
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Programmers Notepad.lnk" "$INSTDIR\Programmers Notepad\pn.exe"
 SkipPN2Menu:
   CreateDirectory "$SMPROGRAMS\$ICONS_GROUP\documentation"
-  !insertmacro SectionFlagIsSet ${pspdoc} ${SF_SELECTED} +1 SkipPSPdocMenu
-  WriteIniStr "$INSTDIR\pspsdk.url" "InternetShortcut" "URL" "file://$INSTDIR\doc\pspsdk\doc\html\index.html"
-  CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\documentation\pspsdk.lnk" "$INSTDIR\pspsdk.url"
-
-SkipPSPdocMenu:
   SetOutPath $INSTDIR
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Update.lnk" "$INSTDIR\$R1"
   !insertmacro MUI_STARTMENU_WRITE_END
@@ -791,8 +751,6 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${SecdevkitARM} "toolchain for ARM platforms"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecdkARM} "toolchain for ARM platforms"
   !insertmacro MUI_DESCRIPTION_TEXT ${devkitPPC} "toolchain for powerpc platforms"
-  !insertmacro MUI_DESCRIPTION_TEXT ${devkitPSP} "toolchain for psp"
-  !insertmacro MUI_DESCRIPTION_TEXT ${pspdoc} "PSP SDK documentation"
   !insertmacro MUI_DESCRIPTION_TEXT ${Pnotepad} "a programmer's editor"
   !insertmacro MUI_DESCRIPTION_TEXT ${Seclibgba} "Nintendo GBA development library"
   !insertmacro MUI_DESCRIPTION_TEXT ${maxmodgba} "Nintendo GBA audio library"
@@ -862,7 +820,7 @@ downloadINI:
   Rename $EXEDIR\devkitProUpdate.ini $EXEDIR\devkitProUpdate.ini.old
 
   ; Quietly download the latest devkitProUpdate.ini file
-  inetc::get  /BANNER "Checking for updates ..." "http://devkitpro.sourceforge.net/devkitProUpdate.ini" "$EXEDIR\devkitProUpdate.ini" /END
+  inetc::get  /BANNER "Checking for updates ..." "https://downloads.devkitpro.org/devkitProUpdate.ini" "$EXEDIR\devkitProUpdate.ini" /END
 
 
   pop $R0
@@ -1034,17 +992,6 @@ installing:
   ReadINIStr $GCUBE "$EXEDIR\devkitProUpdate.ini" "gcube" "File"
   ReadINIStr $GCUBE_VER "$EXEDIR\devkitProUpdate.ini" "gcube" "Version"
   SectionSetSize ${gcube} $R0
-
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitPSP" "Size"
-  ReadINIStr $DEVKITPSP "$EXEDIR\devkitProUpdate.ini" "devkitPSP" "File"
-  ReadINIStr $DEVKITPSP_VER "$EXEDIR\devkitProUpdate.ini" "devkitPSP" "Version"
-  SectionSetSize ${devkitPSP} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "pspdoc" "Size"
-  ReadINIStr $PSPDOC "$EXEDIR\devkitProUpdate.ini" "pspdoc" "File"
-  ReadINIStr $PSPDOC_VER "$EXEDIR\devkitProUpdate.ini" "pspdoc" "Version"
-  SectionSetSize ${pspdoc} $R0
 
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "pnotepad" "Size"
   ReadINIStr $PNOTEPAD "$EXEDIR\devkitProUpdate.ini" "pnotepad" "File"
@@ -1252,27 +1199,6 @@ dkARMupdates:
 
 dkPPCupdates:
 
-  StrCpy $R2 $Updates
-  ReadINIStr $0 "$INSTDIR\installed.ini" "devkitPSP" "Version"
-
-  push "devkitPSP"
-  push $DEVKITPSP_VER
-  push ${devkitPSP}
-  call checkVersion
-
-  ReadINIStr $0 "$INSTDIR\installed.ini" "pspdoc" "Version"
-
-  push "pspdoc"
-  push $PSPDOC_VER
-  push ${pspdoc}
-  call checkVersion
-
-  IntOp $R1 $Updates - $R2
-  IntCmp $R1 0 +1 dkPSPupdates dkPSPupdates
-
-  SectionSetText ${grpdevkitPSP} ""
-
-dkPSPupdates:
   ReadINIStr $0 "$INSTDIR\installed.ini" "pnotepad" "Version"
 
   push "pnotepad"
