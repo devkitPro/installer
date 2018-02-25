@@ -1,4 +1,4 @@
-RequestExecutionLevel user /* RequestExecutionLevel REQUIRED! */
+RequestExecutionLevel admin ;Require admin rights on NT6+ (When UAC is turned on)
 
 ; plugins required
 ; untgz     - http://nsis.sourceforge.net/UnTGZ_plug-in
@@ -20,7 +20,7 @@ RequestExecutionLevel user /* RequestExecutionLevel REQUIRED! */
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
 !define BUILD "49"
 
-SetCompressor lzma
+SetCompressor /SOLID lzma
 
 ; MUI 1.67 compatible ------
 !include "UAC.nsh"
@@ -789,26 +789,26 @@ var mirrorINI
 ;-----------------------------------------------------------------------------------------------------------------------
 Function .onInit
 ;-----------------------------------------------------------------------------------------------------------------------
-uac_tryagain:
-!insertmacro UAC_RunElevated
-${Switch} $0
-${Case} 0
-	${IfThen} $1 = 1 ${|} Quit ${|} ;we are the outer process, the inner process has done its work, we are done
-	${IfThen} $3 <> 0 ${|} ${Break} ${|} ;we are admin, let the show go on
-	${If} $1 = 3 ;RunAs completed successfully, but with a non-admin user
-		MessageBox mb_YesNo|mb_IconExclamation|mb_TopMost|mb_SetForeground "This installer requires admin privileges, try again" /SD IDNO IDYES uac_tryagain IDNO 0
-	${EndIf}
-	;fall-through and die
-${Case} 1223
-	MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "This installer requires admin privileges, aborting!"
-	Quit
-${Case} 1062
-	MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Logon service not running, aborting!"
-	Quit
-${Default}
-	MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Unable to elevate , error $0"
-	Quit
-${EndSwitch}
+;uac_tryagain:
+;!insertmacro UAC_RunElevated
+;${Switch} $0
+;${Case} 0
+;	${IfThen} $1 = 1 ${|} Quit ${|} ;we are the outer process, the inner process has done its work, we are done
+;	${IfThen} $3 <> 0 ${|} ${Break} ${|} ;we are admin, let the show go on
+;	${If} $1 = 3 ;RunAs completed successfully, but with a non-admin user
+;		MessageBox mb_YesNo|mb_IconExclamation|mb_TopMost|mb_SetForeground "This installer requires admin privileges, try again" /SD IDNO IDYES uac_tryagain IDNO 0
+;	${EndIf}
+;	;fall-through and die
+;${Case} 1223
+;	MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "This installer requires admin privileges, aborting!"
+;	Quit
+;${Case} 1062
+;	MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Logon service not running, aborting!"
+;	Quit
+;${Default}
+;	MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Unable to elevate , error $0"
+;	Quit
+;${EndSwitch}
   ; test existing ini file version
   ; if lower than build then use built in ini
   ifFileExists $EXEDIR\devkitProUpdate.ini +1 extractINI
