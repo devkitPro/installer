@@ -29,6 +29,8 @@ SetCompressor /SOLID lzma
 !include "Sections.nsh"
 !include "StrFunc.nsh"
 !include "InstallOptions.nsh"
+!include "ReplaceInFile.nsh"
+!include NTProfiles.nsh
 
 ;${StrTok}
 ${StrRep}
@@ -161,8 +163,8 @@ ShowUnInstDetails show
 
 var Install
 var Updating
-var MSYS
-var MSYS_VER
+var MSYS2
+var MSYS2_VER
 
 var DEVKITARM
 var DEVKITARM_VER
@@ -351,7 +353,7 @@ Section -installComponents
   StrCpy $BASEDIR /$R0$R1
 
   push ${SecMsys}
-  push $MSYS
+  push $MSYS2
   Call DownloadIfNeeded
 
   push ${SecdkARM}
@@ -468,14 +470,25 @@ Section -installComponents
 
 test_Msys:
   !insertmacro SectionFlagIsSet ${SecMsys} ${SF_SELECTED} install_Msys SkipMsys
-install_Msys:
 
-  ExecWait '"$EXEDIR\$MSYS" -y -o$INSTDIR'
-  WriteINIStr $INSTDIR\installed.ini msys Version $MSYS_VER
-  push $MSYS
+install_Msys:
+  ; Set output path to the installation directory.
+  SetOutPath $INSTDIR
+  SetDetailsPrint both
+
+  Nsis7z::ExtractWithDetails "$EXEDIR\$MSYS2" "Installing package %s..."
+  WriteINIStr $INSTDIR\installed.ini msys2 Version $MSYS2_VER
+  push $MSYS2
   call RemoveFile
 
 SkipMsys:
+
+  !insertmacro _ReplaceInFile "$INSTDIR\msys2\etc\fstab" "{DEVKITPRO}" "$INSTDIR"
+
+  ${ProfilesPath} $0
+  !insertmacro _ReplaceInFile "$INSTDIR\msys2\etc\fstab" "{PROFILES_ROOT}" "$0"
+
+
   push ${SecdkARM}
   push "DEVKITARM"
   push $DEVKITARM
@@ -682,12 +695,15 @@ skip_copy:
   SetShellVarContext all ; Put stuff in All Users
   SetOutPath $INSTDIR
   IntCmp $Updating 1 CheckPN2
+
   WriteIniStr "$INSTDIR\devkitPro.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
   CreateDirectory "$SMPROGRAMS\$ICONS_GROUP"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\devkitpro.lnk" "$INSTDIR\devkitPro.url"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Uninstall.lnk" "$INSTDIR\uninst.exe"
-  SetOutPath $INSTDIR\msys\bin
-  CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\MSys.lnk" "$INSTDIR\msys\msys.bat" "-norxvt" "$INSTDIR\msys\m.ico"
+
+  SetOutPath $INSTDIR\msys2
+  CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\MSys.lnk" "$INSTDIR\msys2\msys2_shell.cmd" "" "$INSTDIR\msys2\msys2.ico"
+
 CheckPN2:
   !insertmacro SectionFlagIsSet ${Pnotepad} ${SF_SELECTED} +1 SkipPN2Menu
   SetOutPath "$INSTDIR\Programmers Notepad"
@@ -712,13 +728,14 @@ SkipInstall:
   ReadRegStr $1 HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "PATH"
   ; remove it to avoid multiple paths with separate installs
   ${StrRep} $2 $1 "$INSTDIR\msys\bin;" ""
+  ${StrRep} $2 $2 "$INSTDIR\msys2\usr\bin;" ""
   StrCmp $2 "" 0 WritePath
 
 	MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Trying to set path to blank string!$\nPlease add $INSTDIR\msys\bin; to the start of your path"
   goto AbortPath
 
 WritePath:
-  StrCpy $2 "$INSTDIR\msys\bin;$2"
+  StrCpy $2 "$INSTDIR\msys2\usr\bin;$2"
   WriteRegExpandStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "PATH" $2
   SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 AbortPath:
@@ -736,6 +753,7 @@ Section Uninstall
 
   ReadRegStr $1 HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "PATH"
   ${UnStrRep} $1 $1 "$INSTDIR\msys\bin;" ""
+  ${UnStrRep} $1 $1 "$INSTDIR\msys2\usr\bin;" ""
   WriteRegExpandStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "PATH" $1
   SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 
@@ -880,9 +898,9 @@ gotINI:
 
 installing:
 
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "msys" "Size"
-  ReadINIStr $MSYS "$EXEDIR\devkitProUpdate.ini" "msys" "File"
-  ReadINIStr $MSYS_VER "$EXEDIR\devkitProUpdate.ini" "msys" "Version"
+  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "msys2" "Size"
+  ReadINIStr $MSYS2 "$EXEDIR\devkitProUpdate.ini" "msys2" "File"
+  ReadINIStr $MSYS2_VER "$EXEDIR\devkitProUpdate.ini" "msys2" "Version"
   SectionSetSize ${SecMsys} $R0
 
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitARM" "Size"
@@ -1121,8 +1139,8 @@ installing:
 
 dkARMupdates:
 
-  push "msys"
-  push $MSYS_VER
+  push "msys2"
+  push $MSYS2_VER
   push ${SecMsys}
   call checkVersion
 
