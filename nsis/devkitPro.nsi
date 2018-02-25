@@ -1,24 +1,28 @@
 RequestExecutionLevel admin ;Require admin rights on NT6+ (When UAC is turned on)
 
 ; plugins required
-; untgz     - http://nsis.sourceforge.net/UnTGZ_plug-in
-; inetc     - http://nsis.sourceforge.net/Inetc_plug-in
-;             http://forums.winamp.com/showthread.php?s=&threadid=198596&perpage=40&highlight=&pagenumber=4
-;             http://forums.winamp.com/attachment.php?s=&postid=1831346
-; UAC         http://nsis.sourceforge.net/UAC_plug-in
-; ZipDLL      http://nsis.sourceforge.net/ZipDLL_plug-in
+; untgz          - http://nsis.sourceforge.net/UnTGZ_plug-in
+; inetc          - http://nsis.sourceforge.net/Inetc_plug-in
+;                  http://forums.winamp.com/showthread.php?s=&threadid=198596&perpage=40&highlight=&pagenumber=4
+;                  http://forums.winamp.com/attachment.php?s=&postid=1831346
+; UAC            - http://nsis.sourceforge.net/UAC_plug-in
+; ZipDLL         - http://nsis.sourceforge.net/ZipDLL_plug-in
+; ReplaceInFile  - http://nsis.sourceforge.net/ReplaceInFile
+; NSIS 7zip      - http://nsis.sourceforge.net/Nsis7z_plug-in
+; NTProfiles.nsh - http://nsis.sourceforge.net/NT_Profile_Paths
+
 
 ; NSIS large strings build from http://nsis.sourceforge.net/Special_Builds
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "2.1.1"
+!define PRODUCT_VERSION "2.2.0"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "50"
+!define BUILD "51"
 
 SetCompressor /SOLID lzma
 
