@@ -482,7 +482,6 @@ SkipMsys:
   push "$BASEDIR/devkitARM"
   push "devkitARM"
   push $DEVKITARM_VER
-  push 1
   call ExtractToolChain
 
   push ${devkitPPC}
@@ -491,7 +490,6 @@ SkipMsys:
   push "$BASEDIR/devkitPPC"
   push "devkitPPC"
   push $DEVKITPPC_VER
-  push 1
   call ExtractToolChain
 
   push ${devkitA64}
@@ -500,7 +498,6 @@ SkipMsys:
   push "$BASEDIR/devkitA64"
   push "devkitA64"
   push $DEVKITA64_VER
-  push 0
   call ExtractToolChain
 
   push ${Seclibgba}
@@ -1384,15 +1381,13 @@ FunctionEnd
 var LIB
 var FOLDER
 
-
 ;-----------------------------------------------------------------------------------------------------------------------
 Function ExtractToolChain
 ;-----------------------------------------------------------------------------------------------------------------------
-  pop $R6  ; delete directory flag
   pop $R5  ; version
   pop $R4  ; section name
-  pop $R3  ; name
-  pop $R2  ; 7zip sfx
+  pop $R3  ; path
+  pop $R2  ; 7zip
   pop $R1  ; env variable
   pop $R0  ; section flags
 
@@ -1400,24 +1395,23 @@ Function ExtractToolChain
   IntOp $0 $0 & ${SF_SELECTED}
   IntCmp $0 ${SF_SELECTED} +1 SkipExtract
 
-
-  IntCmp $R6 1 +1 SkipRemove
-
   RMDir /r "$INSTDIR\$R4"
 
-SkipRemove:
-  ExecWait '"$EXEDIR\$R2" -y -o$INSTDIR'
+  SetOutPath $INSTDIR
+
+  Nsis7z::ExtractWithDetails "$EXEDIR\$R2" "Installing package %s..."
 
   StrCmp $R1 "" NoEnvVar 0
 
   WriteRegStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" $R1 $R3
   SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 
-  WriteINIStr $INSTDIR\installed.ini $R4 Version $R5
-
 NoEnvVar:
+
   push $R2
   call RemoveFile
+
+  WriteINIStr $INSTDIR\installed.ini $R4 Version $R5
 
 SkipExtract:
 
