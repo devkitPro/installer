@@ -12,13 +12,13 @@ RequestExecutionLevel user /* RequestExecutionLevel REQUIRED! */
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "2.0.0"
+!define PRODUCT_VERSION "2.1.0"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "48"
+!define BUILD "49"
 
 SetCompressor lzma
 
@@ -495,7 +495,7 @@ SkipMsys:
   call ExtractToolChain
 
   push ${devkitA64}
-  push "DEVKITA64"
+  push ""
   push $DEVKITA64
   push "$BASEDIR/devkitA64"
   push "devkitA64"
@@ -1408,11 +1408,14 @@ Function ExtractToolChain
 SkipRemove:
   ExecWait '"$EXEDIR\$R2" -y -o$INSTDIR'
 
+  StrCmp $R1 "" NoEnvVar 0
+
   WriteRegStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" $R1 $R3
   SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 
   WriteINIStr $INSTDIR\installed.ini $R4 Version $R5
 
+NoEnvVar:
   push $R2
   call RemoveFile
 
