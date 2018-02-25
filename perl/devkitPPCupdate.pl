@@ -169,7 +169,7 @@
   {
     if($versions{$key} ne $newVersions{$key} and $newVersions{$key} ne 0)
     {
-      $newFiles{$key} =~ s/win32\.exe/$archname.tar.bz2/;
+      $newFiles{$key} =~ s/win32\.7z/$archname.tar.bz2/;
       $updates{$key} = $newFiles{$key};
     }
     else
