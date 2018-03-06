@@ -12,13 +12,13 @@ RequestExecutionLevel admin ;Require admin rights on NT6+ (When UAC is turned on
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "2.1.0"
+!define PRODUCT_VERSION "2.1.1"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "49"
+!define BUILD "50"
 
 SetCompressor /SOLID lzma
 

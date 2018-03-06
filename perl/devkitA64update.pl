@@ -98,7 +98,7 @@
 	unlink("devkitProUpdate.ini") or die $!;
   }
   printf("Downloading update file...");
-  system($downloader . " http://downloads.devkitpro.org/devkitProUpdate.ini") and die "Failed to download!";
+  system($downloader . " https://downloads.devkitpro.org/devkitProUpdate.ini") and die "Failed to download!";
   printf("OK!\n");
 
   # Initialize versions & newVersions
@@ -181,7 +181,7 @@
       unlink($updates{$key});
     }
 
-    my $cmd = sprintf("%s http://downloads.devkitpro.org/%s", $downloader, $updates{$key});
+    my $cmd = sprintf("%s https://downloads.devkitpro.org/%s", $downloader, $updates{$key});
     printf("  Downloading...");
     system($cmd) and die "Failed to download $updates{$key}\n";
     printf("OK!\n");
