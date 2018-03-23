@@ -34,7 +34,7 @@ SetCompressor /SOLID lzma
 !include "StrFunc.nsh"
 !include "InstallOptions.nsh"
 !include "ReplaceInFile.nsh"
-!include NTProfiles.nsh
+!include "NTProfiles.nsh"
 
 ;${StrTok}
 ${StrRep}
@@ -485,18 +485,35 @@ install_Msys:
   push $MSYS2
   call RemoveFile
 
-SkipMsys:
 
-  !insertmacro _ReplaceInFile "$INSTDIR\msys2\etc\fstab" "{DEVKITPRO}" "$INSTDIR"
+  !insertmacro _ReplaceInFile "$INSTDIR\msys2\etc\fstab" "#{DEVKITPRO}" "$INSTDIR"
 
   ${ProfilesPath} $0
-  !insertmacro _ReplaceInFile "$INSTDIR\msys2\etc\fstab" "{PROFILES_ROOT}" "$0"
+  !insertmacro _ReplaceInFile "$INSTDIR\msys2\etc\fstab" "#{PROFILES_ROOT}" "$0"
 
+  ExecWait '"$INSTDIR\msys2\usr\bin\bash.exe" --login -c exit'
+
+  ; Reset msys path to start of path
+  ReadRegStr $1 HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "PATH"
+  ; remove it to avoid multiple paths with separate installs
+  ${StrRep} $2 $1 "$INSTDIR\msys\bin;" ""
+  ${StrRep} $2 $2 "$INSTDIR\msys2\usr\bin;" ""
+  StrCmp $2 "" 0 WritePath
+
+  MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Trying to set path to blank string!$\nPlease add $INSTDIR\msys2\usr\bin; to the start of your path"
+  goto AbortPath
+
+WritePath:
+  StrCpy $2 "$INSTDIR\msys2\usr\bin;$2"
+  WriteRegExpandStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "PATH" $2
+  SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
+AbortPath:
+
+SkipMsys:
 
   push ${SecdkARM}
   push "DEVKITARM"
   push $DEVKITARM
-  push "$BASEDIR/devkitARM"
   push "devkitARM"
   push $DEVKITARM_VER
   call ExtractToolChain
@@ -504,7 +521,6 @@ SkipMsys:
   push ${devkitPPC}
   push "DEVKITPPC"
   push $DEVKITPPC
-  push "$BASEDIR/devkitPPC"
   push "devkitPPC"
   push $DEVKITPPC_VER
   call ExtractToolChain
@@ -512,7 +528,6 @@ SkipMsys:
   push ${devkitA64}
   push ""
   push $DEVKITA64
-  push "$BASEDIR/devkitA64"
   push "devkitA64"
   push $DEVKITA64_VER
   call ExtractToolChain
@@ -698,24 +713,31 @@ skip_copy:
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
   SetShellVarContext all ; Put stuff in All Users
   SetOutPath $INSTDIR
-  IntCmp $Updating 1 CheckPN2
+
+  IntCmp $Updating 1 CheckMsys2
 
   WriteIniStr "$INSTDIR\devkitPro.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
   CreateDirectory "$SMPROGRAMS\$ICONS_GROUP"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\devkitpro.lnk" "$INSTDIR\devkitPro.url"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Uninstall.lnk" "$INSTDIR\uninst.exe"
 
-  SetOutPath $INSTDIR\msys2
-  CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\MSys.lnk" "$INSTDIR\msys2\msys2_shell.cmd" "" "$INSTDIR\msys2\msys2.ico"
+CheckMsys2:
+  !insertmacro SectionFlagIsSet ${SecMsys} ${SF_SELECTED} +1 CheckPN2
+
+  SetOutPath "$INSTDIR\msys2"
+  CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\MSys2.lnk" "$INSTDIR\msys2\msys2_shell.bat" "" "$INSTDIR\msys2\msys2.ico"
 
 CheckPN2:
   !insertmacro SectionFlagIsSet ${Pnotepad} ${SF_SELECTED} +1 SkipPN2Menu
+
   SetOutPath "$INSTDIR\Programmers Notepad"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Programmers Notepad.lnk" "$INSTDIR\Programmers Notepad\pn.exe"
+
 SkipPN2Menu:
   SetOutPath $INSTDIR
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Update.lnk" "$INSTDIR\$R1"
   !insertmacro MUI_STARTMENU_WRITE_END
+
   WriteUninstaller "$INSTDIR\uninst.exe"
   IntCmp $Updating 1 SkipInstall
 
@@ -725,24 +747,9 @@ SkipPN2Menu:
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
 
 SkipInstall:
-  WriteRegStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "DEVKITPRO" "$BASEDIR"
+  WriteRegStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "DEVKITPRO" "/opt/devkitpro"
   SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 
-  ; Reset msys path to start of path
-  ReadRegStr $1 HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "PATH"
-  ; remove it to avoid multiple paths with separate installs
-  ${StrRep} $2 $1 "$INSTDIR\msys\bin;" ""
-  ${StrRep} $2 $2 "$INSTDIR\msys2\usr\bin;" ""
-  StrCmp $2 "" 0 WritePath
-
-	MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Trying to set path to blank string!$\nPlease add $INSTDIR\msys\bin; to the start of your path"
-  goto AbortPath
-
-WritePath:
-  StrCpy $2 "$INSTDIR\msys2\usr\bin;$2"
-  WriteRegExpandStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "PATH" $2
-  SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
-AbortPath:
   ; write the version to the reg key so add/remove prograns has the right one
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
@@ -1403,12 +1410,13 @@ FunctionEnd
 var LIB
 var FOLDER
 
+
+
 ;-----------------------------------------------------------------------------------------------------------------------
 Function ExtractToolChain
 ;-----------------------------------------------------------------------------------------------------------------------
   pop $R5  ; version
   pop $R4  ; section name
-  pop $R3  ; path
   pop $R2  ; 7zip
   pop $R1  ; env variable
   pop $R0  ; section flags
@@ -1425,7 +1433,7 @@ Function ExtractToolChain
 
   StrCmp $R1 "" NoEnvVar 0
 
-  WriteRegStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" $R1 $R3
+  WriteRegStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" $R1 "/opt/devkitpro/$R4"
   SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 
 NoEnvVar:
