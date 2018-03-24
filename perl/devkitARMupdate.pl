@@ -25,27 +25,9 @@
 #-----------------------------------------------------------------------------
   use strict;
 
-  my $dir = "$ENV{HOME}/devkitPro";
+  my $dir = "/opt/devkitpro";
   my $downloader;
   my $archname;
-
-  if($ENV{"DEVKITPRO"} ne "")
-  {
-    $dir = $ENV{"DEVKITPRO"};
-  }
-
-  if($#ARGV eq 0)
-  {
-    $dir = $ARGV[0];
-  }
-
-  # Ensure full pathname
-  if(!($dir =~ /^\//))
-  {
-    my $pwd = `pwd`;
-    chomp($pwd);
-    $dir = "$pwd/$dir";
-  }
 
   printf("devkitARM Updater/Installer\n");
   printf("Installing to %s\n", $dir);
