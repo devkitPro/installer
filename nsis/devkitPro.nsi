@@ -10,19 +10,20 @@ RequestExecutionLevel admin ;Require admin rights on NT6+ (When UAC is turned on
 ; ReplaceInFile  - http://nsis.sourceforge.net/ReplaceInFile
 ; NSIS 7zip      - http://nsis.sourceforge.net/Nsis7z_plug-in
 ; NTProfiles.nsh - http://nsis.sourceforge.net/NT_Profile_Paths
+; AccessControl  - http://nsis.sourceforge.net/AccessControl_plug-in
 
 
 ; NSIS large strings build from http://nsis.sourceforge.net/Special_Builds
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "2.2.0"
+!define PRODUCT_VERSION "2.2.1"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "51"
+!define BUILD "52"
 
 SetCompressor /SOLID lzma
 
@@ -490,6 +491,11 @@ install_Msys:
 
   ${ProfilesPath} $0
   !insertmacro _ReplaceInFile "$INSTDIR\msys2\etc\fstab" "#{PROFILES_ROOT}" "$0"
+
+  AccessControl::GrantOnFile "$INSTDIR\msys2\etc\fstab" "(BU)" "GenericRead"
+  pop $0
+
+  Delete "$INSTDIR\msys2\etc\fstab.old"
 
   ExecWait '"$INSTDIR\msys2\usr\bin\bash.exe" --login -c exit'
 
