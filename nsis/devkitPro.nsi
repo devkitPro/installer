@@ -5,8 +5,6 @@ RequestExecutionLevel admin ;Require admin rights on NT6+ (When UAC is turned on
 ; inetc          - http://nsis.sourceforge.net/Inetc_plug-in
 ;                  http://forums.winamp.com/showthread.php?s=&threadid=198596&perpage=40&highlight=&pagenumber=4
 ;                  http://forums.winamp.com/attachment.php?s=&postid=1831346
-; UAC            - http://nsis.sourceforge.net/UAC_plug-in
-; ZipDLL         - http://nsis.sourceforge.net/ZipDLL_plug-in
 ; ReplaceInFile  - http://nsis.sourceforge.net/ReplaceInFile
 ; NSIS 7zip      - http://nsis.sourceforge.net/Nsis7z_plug-in
 ; NTProfiles.nsh - http://nsis.sourceforge.net/NT_Profile_Paths
@@ -17,20 +15,18 @@ RequestExecutionLevel admin ;Require admin rights on NT6+ (When UAC is turned on
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "2.2.1"
+!define PRODUCT_VERSION "3.0.0"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "52"
+!define BUILD "53"
 
 SetCompressor /SOLID lzma
 
 ; MUI 1.67 compatible ------
-!include "UAC.nsh"
 !include "MUI2.nsh"
-!include "zipdll.nsh"
 !include "Sections.nsh"
 !include "StrFunc.nsh"
 !include "InstallOptions.nsh"
@@ -110,7 +106,6 @@ var ChooseMessage
 
 ; Components page
 !define MUI_PAGE_HEADER_SUBTEXT $ChooseMessage
-!define MUI_PAGE_CUSTOMFUNCTION_PRE AbortComponents
 !insertmacro MUI_PAGE_COMPONENTS
 
 ; Directory page
@@ -171,178 +166,21 @@ var Updating
 var MSYS2
 var MSYS2_VER
 
-var DEVKITARM
-var DEVKITARM_VER
-var LIBGBA
-var LIBGBA_VER
-var LIBGBA_FAT
-var LIBGBA_FAT_VER
-var LIBNDS
-var LIBNDS_VER
-var LIBCTRU
-var LIBCTRU_VER
-var CTREXAMPLES
-var CTREXAMPLES_VER
-var CITRO3D
-var CITRO3D_VER
-var DSWIFI
-var DSWIFI_VER
-var LIBNDS_FAT
-var LIBNDS_FAT_VER
-var NDSEXAMPLES
-var NDSEXAMPLES_VER
-var MAXMODDS
-var MAXMODDS_VER
-var MAXMODGBA
-var MAXMODGBA_VER
-var GBAEXAMPLES
-var GBAEXAMPLES_VER
-var GP32EXAMPLES
-var GP32EXAMPLES_VER
-var DEFAULT_ARM7
-var DEFAULT_ARM7_VER
-var FILESYSTEM
-var FILESYSTEM_VER
-var LIBMIRKO
-var LIBMIRKO_VER
-
-var DEVKITPPC
-var DEVKITPPC_VER
-var CUBEEXAMPLES
-var CUBEEXAMPLES_VER
-var WIIEXAMPLES
-var WIIEXAMPLES_VER
-var LIBOGC
-var LIBOGC_VER
-var LIBOGC_FAT
-var LIBOGC_FAT_VER
-
-var DEVKITA64
-var DEVKITA64_VER
-var LIBNX
-var LIBNX_VER
-var SWITCHEXAMPLES
-var SWITCHEXAMPLES_VER
-
-var PNOTEPAD
-var PNOTEPAD_VER
-
 var BASEDIR
 var Updates
 
-InstType "Full"
-InstType "devkitARM"
-InstType "devkitPPC"
-InstType "devkitA64"
-
 Section "Minimal System" SecMsys
-    SectionIn 1 2 3 4
 SectionEnd
 
-SectionGroup devkitARM SecdevkitARM
-	; Application
-	Section "devkitARM" SecdkARM
-          SectionIn 1 2
-        SectionEnd
-
-	Section "libgba" Seclibgba
-          SectionIn 1 2
-        SectionEnd
-
-	Section "libfat-gba" Seclibgbafat
-          SectionIn 1 2
-	SectionEnd
-
-	Section "maxmodgba" maxmodgba
-          SectionIn 1 2
-	SectionEnd
-
-	Section "libmirko" Seclibmirko
-          SectionIn 1 2
-	SectionEnd
-
-	Section "libnds" Seclibnds
-          SectionIn 1 2
-	SectionEnd
-
-	Section "libfat-nds" Seclibndsfat
-          SectionIn 1 2
-	SectionEnd
-
-	Section "maxmodds" maxmodds
-          SectionIn 1 2
-	SectionEnd
-
-	Section "dswifi lib" Secdswifi
-          SectionIn 1 2
-	SectionEnd
-
-	Section "nds examples" ndsexamples
-          SectionIn 1 2
-	SectionEnd
-
-	Section "gba examples" gbaexamples
-          SectionIn 1 2
-	SectionEnd
-
-	Section "gp32 examples" gp32examples
-          SectionIn 1 2
-	SectionEnd
-
-	Section "nds default arm7" defaultarm7
-          SectionIn 1 2
-	SectionEnd
-
-	Section "filesystem" filesystem
-          SectionIn 1 2
-	SectionEnd
-
-	Section "libctru" Seclibctru
-          SectionIn 1 2
-	SectionEnd
-
-  Section "citro3d" Seccitro3d
-          SectionIn 1 2
-  SectionEnd
-
-  Section "3ds examples" Sec3dsexamples
-          SectionIn 1 2
-  SectionEnd
-
-SectionGroupEnd
-
-SectionGroup "devkitPPC" grpdevkitPPC
-  Section "devkitPPC" devkitPPC
-    SectionIn 1 3
-  SectionEnd
-  Section "libogc" libogc
-    SectionIn 1 3
-  SectionEnd
-  Section "libfat-ogc" libogcfat
-    SectionIn 1 3
-  SectionEnd
-  Section "Gamecube examples" cubeexamples
-    SectionIn 1 3
-  SectionEnd
-  Section "Wii examples" wiiexamples
-    SectionIn 1 3
-  SectionEnd
-SectionGroupEnd
-
-SectionGroup "devkitA64" grpdevkitA64
-  Section "devkitA64" devkitA64
-    SectionIn 1 4
-  SectionEnd
-  Section "libnx" libnx
-    SectionIn 1 4
-  SectionEnd
-  Section "Switch examples" switchexamples
-    SectionIn 1 4
-  SectionEnd
-SectionGroupEnd
-
-Section "Programmer's Notepad" Pnotepad
-  SectionIn 1 2 3 4
+Section "Switch Development" SecSwitchDev
+SectionEnd
+Section "GBA Development" SecGBADev
+SectionEnd
+Section "GP32 Development" SecGp32Dev
+SectionEnd
+Section "NDS Development" SecNDSDev
+SectionEnd
+Section "3DS Development" Sec3DSDev
 SectionEnd
 
 Section -installComponents
@@ -359,110 +197,6 @@ Section -installComponents
 
   push ${SecMsys}
   push $MSYS2
-  Call DownloadIfNeeded
-
-  push ${SecdkARM}
-  push $DEVKITARM
-  Call DownloadIfNeeded
-
-  push ${Seclibgba}
-  push $LIBGBA
-  Call DownloadIfNeeded
-
-  push ${Seclibgbafat}
-  push $LIBGBA_FAT
-  Call DownloadIfNeeded
-
-  push ${Seclibnds}
-  push $LIBNDS
-  Call DownloadIfNeeded
-
-  push ${Seclibctru}
-  push $LIBCTRU
-  Call DownloadIfNeeded
-
-  push ${Seccitro3d}
-  push $CITRO3D
-  Call DownloadIfNeeded
-
-  push ${Secdswifi}
-  push $DSWIFI
-  Call DownloadIfNeeded
-
-  push ${Seclibndsfat}
-  push $LIBNDS_FAT
-  Call DownloadIfNeeded
-
-  push ${Seclibmirko}
-  push $LIBMIRKO
-  Call DownloadIfNeeded
-
-  push ${maxmodgba}
-  push $MAXMODGBA
-  Call DownloadIfNeeded
-
-  push ${maxmodds}
-  push $MAXMODDS
-  Call DownloadIfNeeded
-
-  push ${ndsexamples}
-  push $NDSEXAMPLES
-  Call DownloadIfNeeded
-
-  push ${defaultarm7}
-  push $DEFAULT_ARM7
-  Call DownloadIfNeeded
-
-  push ${filesystem}
-  push $FILESYSTEM
-  Call DownloadIfNeeded
-
-  push ${gbaexamples}
-  push $GBAEXAMPLES
-  Call DownloadIfNeeded
-
-  push ${gp32examples}
-  push $GP32EXAMPLES
-  Call DownloadIfNeeded
-
-  push ${Sec3dsexamples}
-  push $CTREXAMPLES
-  Call DownloadIfNeeded
-
-  push ${devkitPPC}
-  push $DEVKITPPC
-  Call DownloadIfNeeded
-
-  push ${libogc}
-  push $LIBOGC
-  Call DownloadIfNeeded
-
-  push ${libogcfat}
-  push $LIBOGC_FAT
-  Call DownloadIfNeeded
-
-  push ${cubeexamples}
-  push $CUBEEXAMPLES
-  Call DownloadIfNeeded
-
-  push ${wiiexamples}
-  push $WIIEXAMPLES
-  Call DownloadIfNeeded
-
-  push ${devkitA64}
-  push $DEVKITA64
-  Call DownloadIfNeeded
-
-  push ${libnx}
-  push $LIBNX
-  Call DownloadIfNeeded
-
-  push ${switchexamples}
-  push $SWITCHEXAMPLES
-  Call DownloadIfNeeded
-
-  push ${pnotepad}
-  push $PNOTEPAD
   Call DownloadIfNeeded
 
   SetDetailsView show
@@ -517,197 +251,34 @@ AbortPath:
 
 SkipMsys:
 
-  push ${SecdkARM}
-  push "DEVKITARM"
-  push $DEVKITARM
-  push "devkitARM"
-  push $DEVKITARM_VER
-  call ExtractToolChain
+  ExecWait '"$INSTDIR\msys2\usr\bin\pacman.exe" -Syu --noconfirm'
 
-  push ${devkitPPC}
-  push "DEVKITPPC"
-  push $DEVKITPPC
-  push "devkitPPC"
-  push $DEVKITPPC_VER
-  call ExtractToolChain
+  push "GBADev"
+  push "gba-dev"
+  push ${SecGBADev}
+  call updateGroup
 
-  push ${devkitA64}
-  push ""
-  push $DEVKITA64
-  push "devkitA64"
-  push $DEVKITA64_VER
-  call ExtractToolChain
+  push "GP32Dev"
+  push "gp32-dev"
+  push ${SecGP32Dev}
+  call updateGroup
 
-  push ${Seclibgba}
-  push "libgba"
-  push $LIBGBA
-  push "libgba"
-  push $LIBGBA_VER
-  call ExtractLib
+  push "NDSDev"
+  push "nds-dev"
+  push ${SecNDSDev}
+  call updateGroup
 
-  push ${Seclibgbafat}
-  push "libgba"
-  push $LIBGBA_FAT
-  push "libgbafat"
-  push $LIBGBA_FAT_VER
-  call ExtractLib
+  push "3DSDev"
+  push "3ds-dev"
+  push ${Sec3DSDev}
+  call updateGroup
 
-  push ${maxmodgba}
-  push "libgba"
-  push $MAXMODGBA
-  push "maxmodgba"
-  push $MAXMODGBA_VER
-  call ExtractLib
+  push "SwitchDev"
+  push "switch-dev"
+  push ${SecSwitchDev}
+  call updateGroup
 
-  push ${Seclibnds}
-  push "libnds"
-  push $LIBNDS
-  push "libnds"
-  push $LIBNDS_VER
-  call ExtractLib
-
-  push ${Seclibndsfat}
-  push "libnds"
-  push $LIBNDS_FAT
-  push "libndsfat"
-  push $LIBNDS_FAT_VER
-  call ExtractLib
-
-  push ${defaultarm7}
-  push "libnds"
-  push $DEFAULT_ARM7
-  push "defaultarm7"
-  push $DEFAULT_ARM7_VER
-  call ExtractLib
-
-  push ${filesystem}
-  push "libnds"
-  push $FILESYSTEM
-  push "filesystem"
-  push $FILESYSTEM_VER
-  call ExtractLib
-
-  push ${Secdswifi}
-  push "libnds"
-  push $DSWIFI
-  push "dswifi"
-  push $DSWIFI_VER
-  call ExtractLib
-
-  push ${Seclibmirko}
-  push "libmirko"
-  push $LIBMIRKO
-  push "libmirko"
-  push $LIBMIRKO_VER
-  call ExtractLib
-
-  push ${maxmodds}
-  push "libnds"
-  push $MAXMODDS
-  push "maxmodds"
-  push $MAXMODDS_VER
-  call ExtractLib
-
-  push ${Seclibctru}
-  push "libctru"
-  push $LIBCTRU
-  push "libctru"
-  push $LIBCTRU_VER
-  call ExtractLib
-
-  push ${Seccitro3d}
-  push "libctru"
-  push $CITRO3D
-  push "citro3d"
-  push $CITRO3D_VER
-  call ExtractLib
-
-  push ${libogc}
-  push "libogc"
-  push $LIBOGC
-  push "libogc"
-  push $LIBOGC_VER
-  call ExtractLib
-
-  push ${libogcfat}
-  push "libogc"
-  push $LIBOGC_FAT
-  push "libogcfat"
-  push $LIBOGC_FAT_VER
-  call ExtractLib
-
-  push ${Sec3dsexamples}
-  push "examples\3ds"
-  push $CTREXAMPLES
-  push "3dsexamples"
-  push $CTREXAMPLES_VER
-  call ExtractExamples
-
-  push ${ndsexamples}
-  push "examples\nds"
-  push $NDSEXAMPLES
-  push "ndsexamples"
-  push $NDSEXAMPLES_VER
-  call ExtractExamples
-
-  push ${gbaexamples}
-  push "examples\gba"
-  push $GBAEXAMPLES
-  push "gbaexamples"
-  push $GBAEXAMPLES_VER
-  call ExtractExamples
-
-  push ${gp32examples}
-  push "examples\gp32"
-  push $GP32EXAMPLES
-  push "gp32examples"
-  push $GP32EXAMPLES_VER
-  call ExtractExamples
-
-  push ${cubeexamples}
-  push "examples\gamecube"
-  push $CUBEEXAMPLES
-  push "cubeexamples"
-  push $CUBEEXAMPLES_VER
-  call ExtractExamples
-
-  push ${wiiexamples}
-  push "examples\wii"
-  push $WIIEXAMPLES
-  push "wiiexamples"
-  push $WIIEXAMPLES_VER
-  call ExtractExamples
-
-  push ${libnx}
-  push "libnx"
-  push $LIBNX
-  push "libnx"
-  push $LIBNX_VER
-  call ExtractLib
-
-  push ${switchexamples}
-  push "examples\switch"
-  push $SWITCHEXAMPLES
-  push "switchexamples"
-  push $SWITCHEXAMPLES_VER
-  call ExtractExamples
-
-  SectionGetFlags ${Pnotepad} $R0
-  IntOp $R0 $R0 & ${SF_SELECTED}
-  IntCmp $R0 ${SF_SELECTED} +1 SkipPnotepad
-
-  RMDir /r "$INSTDIR/Programmers Notepad"
-
-  ZipDLL::extractall $EXEDIR/$PNOTEPAD "$INSTDIR/Programmers Notepad"
-  push $PNOTEPAD
-  call RemoveFile
-
-  WriteRegStr HKCR ".pnproj" "" "PN2.pnproj.1"
-  WriteRegStr HKCR "PN2.pnproj.1\shell\open\command" "" '"$INSTDIR\Programmers Notepad\pn.exe" "%1"'
-  WriteINIStr $INSTDIR\installed.ini pnotepad Version $PNOTEPAD_VER
-
-SkipPnotepad:
-
+  
   Strcpy $R1 "${PRODUCT_NAME}-${PRODUCT_VERSION}.exe"
 
   Delete $INSTDIR\devkitProUpdater*.*
@@ -728,18 +299,12 @@ skip_copy:
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Uninstall.lnk" "$INSTDIR\uninst.exe"
 
 CheckMsys2:
-  !insertmacro SectionFlagIsSet ${SecMsys} ${SF_SELECTED} +1 CheckPN2
+  !insertmacro SectionFlagIsSet ${SecMsys} ${SF_SELECTED} +1 UpdateVars
 
   SetOutPath "$INSTDIR\msys2"
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\MSys2.lnk" "$INSTDIR\msys2\msys2_shell.bat" "" "$INSTDIR\msys2\msys2.ico"
 
-CheckPN2:
-  !insertmacro SectionFlagIsSet ${Pnotepad} ${SF_SELECTED} +1 SkipPN2Menu
-
-  SetOutPath "$INSTDIR\Programmers Notepad"
-  CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Programmers Notepad.lnk" "$INSTDIR\Programmers Notepad\pn.exe"
-
-SkipPN2Menu:
+UpdateVars:
   SetOutPath $INSTDIR
   CreateShortCut "$SMPROGRAMS\$ICONS_GROUP\Update.lnk" "$INSTDIR\$R1"
   !insertmacro MUI_STARTMENU_WRITE_END
@@ -754,6 +319,12 @@ SkipPN2Menu:
 
 SkipInstall:
   WriteRegStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "DEVKITPRO" "/opt/devkitpro"
+  SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
+
+  WriteRegStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "DEVKITARM" "/opt/devkitpro/devkitARM"
+  SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
+
+  WriteRegStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "DEVKITPPC" "/opt/devkitpro/devkitPPC"
   SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 
   ; write the version to the reg key so add/remove prograns has the right one
@@ -790,32 +361,11 @@ SectionEnd
 ; Section descriptions
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${SecMsys} "unix style tools for windows"
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecdevkitARM} "toolchain for ARM platforms"
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecdkARM} "toolchain for ARM platforms"
-  !insertmacro MUI_DESCRIPTION_TEXT ${devkitPPC} "toolchain for powerpc platforms"
-  !insertmacro MUI_DESCRIPTION_TEXT ${devkitA64} "toolchain for aarch64 platforms"
-  !insertmacro MUI_DESCRIPTION_TEXT ${Pnotepad} "a programmer's editor"
-  !insertmacro MUI_DESCRIPTION_TEXT ${Seclibgba} "Nintendo GBA development library"
-  !insertmacro MUI_DESCRIPTION_TEXT ${maxmodgba} "Nintendo GBA audio library"
-  !insertmacro MUI_DESCRIPTION_TEXT ${Seclibgbafat} "Nintendo GBA FAT library"
-  !insertmacro MUI_DESCRIPTION_TEXT ${Seclibmirko} "Gamepark GP32 development library"
-  !insertmacro MUI_DESCRIPTION_TEXT ${Seclibnds} "Nintendo DS development library"
-  !insertmacro MUI_DESCRIPTION_TEXT ${Seclibctru} "Nintendo 3DS development library"
-  !insertmacro MUI_DESCRIPTION_TEXT ${Seccitro3d} "Nintendo 3DS gpu development library"
-  !insertmacro MUI_DESCRIPTION_TEXT ${maxmodds} "Nintendo DS audio library"
-  !insertmacro MUI_DESCRIPTION_TEXT ${Secdswifi} "Nintendo DS wifi library"
-  !insertmacro MUI_DESCRIPTION_TEXT ${Seclibndsfat} "Nintendo DS FAT library"
-  !insertmacro MUI_DESCRIPTION_TEXT ${libogc} "Nintendo Wii and Gamecube development library"
-  !insertmacro MUI_DESCRIPTION_TEXT ${libogcfat} "Nintendo Gamecube/Wii FAT library"
-  !insertmacro MUI_DESCRIPTION_TEXT ${ndsexamples} "Nintendo DS example code"
-  !insertmacro MUI_DESCRIPTION_TEXT ${Sec3dsexamples} "Nintendo 3DS example code"
-  !insertmacro MUI_DESCRIPTION_TEXT ${gbaexamples} "Nintendo GBA example code"
-  !insertmacro MUI_DESCRIPTION_TEXT ${gp32examples} "Gamepark GP32 example code"
-  !insertmacro MUI_DESCRIPTION_TEXT ${cubeexamples} "Nintendo Gamecube example code"
-  !insertmacro MUI_DESCRIPTION_TEXT ${wiiexamples} "Nintendo Wii example code"
-  !insertmacro MUI_DESCRIPTION_TEXT ${defaultarm7} "default Nintendo DS arm7 core"
-  !insertmacro MUI_DESCRIPTION_TEXT ${libnx} "Nintendo Switch development library"
-  !insertmacro MUI_DESCRIPTION_TEXT ${switchexamples} "Nintendo Switch example code"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecSwitchDev} "tools for Switch development"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecGBADev} "tools for GBA development"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecGP32Dev} "tools for GP32 development"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecNDSDev} "tools for NDS development"
+  !insertmacro MUI_DESCRIPTION_TEXT ${Sec3DSDev} "tools for 3DS development"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 var keepINI
@@ -824,26 +374,6 @@ var mirrorINI
 ;-----------------------------------------------------------------------------------------------------------------------
 Function .onInit
 ;-----------------------------------------------------------------------------------------------------------------------
-;uac_tryagain:
-;!insertmacro UAC_RunElevated
-;${Switch} $0
-;${Case} 0
-;	${IfThen} $1 = 1 ${|} Quit ${|} ;we are the outer process, the inner process has done its work, we are done
-;	${IfThen} $3 <> 0 ${|} ${Break} ${|} ;we are admin, let the show go on
-;	${If} $1 = 3 ;RunAs completed successfully, but with a non-admin user
-;		MessageBox mb_YesNo|mb_IconExclamation|mb_TopMost|mb_SetForeground "This installer requires admin privileges, try again" /SD IDNO IDYES uac_tryagain IDNO 0
-;	${EndIf}
-;	;fall-through and die
-;${Case} 1223
-;	MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "This installer requires admin privileges, aborting!"
-;	Quit
-;${Case} 1062
-;	MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Logon service not running, aborting!"
-;	Quit
-;${Default}
-;	MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Unable to elevate , error $0"
-;	Quit
-;${EndSwitch}
   ; test existing ini file version
   ; if lower than build then use built in ini
   ifFileExists $EXEDIR\devkitProUpdate.ini +1 extractINI
@@ -863,7 +393,6 @@ downloadINI:
 
   ; Quietly download the latest devkitProUpdate.ini file
   inetc::get  /BANNER "Checking for updates ..." "https://downloads.devkitpro.org/devkitProUpdate.ini" "$EXEDIR\devkitProUpdate.ini" /END
-
 
   pop $R0
 
@@ -908,147 +437,15 @@ gotINI:
 
   StrCpy $ChooseMessage "Choose the devkitPro components you would like to update."
 
-  InstTypeSetText 0 ""
-  InstTypeSetText 1 ""
-  InstTypeSetText 2 ""
-  InstTypeSetText 3 ""
-
 installing:
+
+  IntOp $0 ${SF_SELECTED} | ${SF_RO}
+  SectionSetFlags ${SecMsys} $0
 
   ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "msys2" "Size"
   ReadINIStr $MSYS2 "$EXEDIR\devkitProUpdate.ini" "msys2" "File"
   ReadINIStr $MSYS2_VER "$EXEDIR\devkitProUpdate.ini" "msys2" "Version"
   SectionSetSize ${SecMsys} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitARM" "Size"
-  ReadINIStr $DEVKITARM "$EXEDIR\devkitProUpdate.ini" "devkitARM" "File"
-  ReadINIStr $DEVKITARM_VER "$EXEDIR\devkitProUpdate.ini" "devkitARM" "Version"
-  SectionSetSize ${SecdkARM} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libgba" "Size"
-  ReadINIStr $LIBGBA "$EXEDIR\devkitProUpdate.ini" "libgba" "File"
-  ReadINIStr $LIBGBA_VER "$EXEDIR\devkitProUpdate.ini" "libgba" "Version"
-  SectionSetSize ${Seclibgba} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libgbafat" "Size"
-  ReadINIStr $LIBGBA_FAT "$EXEDIR\devkitProUpdate.ini" "libgbafat" "File"
-  ReadINIStr $LIBGBA_FAT_VER "$EXEDIR\devkitProUpdate.ini" "libgbafat" "Version"
-  SectionSetSize ${Seclibgbafat} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libnds" "Size"
-  ReadINIStr $LIBNDS "$EXEDIR\devkitProUpdate.ini" "libnds" "File"
-  ReadINIStr $LIBNDS_VER "$EXEDIR\devkitProUpdate.ini" "libnds" "Version"
-  SectionSetSize ${Seclibnds} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libctru" "Size"
-  ReadINIStr $LIBCTRU "$EXEDIR\devkitProUpdate.ini" "libctru" "File"
-  ReadINIStr $LIBCTRU_VER "$EXEDIR\devkitProUpdate.ini" "libctru" "Version"
-  SectionSetSize ${Seclibctru} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "citro3d" "Size"
-  ReadINIStr $CITRO3D "$EXEDIR\devkitProUpdate.ini" "citro3d" "File"
-  ReadINIStr $CITRO3D_VER "$EXEDIR\devkitProUpdate.ini" "citro3d" "Version"
-  SectionSetSize ${Seccitro3d} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "maxmodgba" "Size"
-  ReadINIStr $MAXMODGBA "$EXEDIR\devkitProUpdate.ini" "maxmodgba" "File"
-  ReadINIStr $MAXMODGBA_VER "$EXEDIR\devkitProUpdate.ini" "maxmodgba" "Version"
-  SectionSetSize ${maxmodgba} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "maxmodds" "Size"
-  ReadINIStr $MAXMODDS "$EXEDIR\devkitProUpdate.ini" "maxmodds" "File"
-  ReadINIStr $MAXMODDS_VER "$EXEDIR\devkitProUpdate.ini" "maxmodds" "Version"
-  SectionSetSize ${maxmodds} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libndsfat" "Size"
-  ReadINIStr $LIBNDS_FAT "$EXEDIR\devkitProUpdate.ini" "libndsfat" "File"
-  ReadINIStr $LIBNDS_FAT_VER "$EXEDIR\devkitProUpdate.ini" "libndsfat" "Version"
-  SectionSetSize ${Seclibndsfat} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "dswifi" "Size"
-  ReadINIStr $DSWIFI "$EXEDIR\devkitProUpdate.ini" "dswifi" "File"
-  ReadINIStr $DSWIFI_VER "$EXEDIR\devkitProUpdate.ini" "dswifi" "Version"
-  SectionSetSize ${Secdswifi} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libmirko" "Size"
-  ReadINIStr $LIBMIRKO "$EXEDIR\devkitProUpdate.ini" "libmirko" "File"
-  ReadINIStr $LIBMIRKO_VER "$EXEDIR\devkitProUpdate.ini" "libmirko" "Version"
-  SectionSetSize ${Seclibmirko} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libogc" "Size"
-  ReadINIStr $LIBOGC "$EXEDIR\devkitProUpdate.ini" "libogc" "File"
-  ReadINIStr $LIBOGC_VER "$EXEDIR\devkitProUpdate.ini" "libogc" "Version"
-  SectionSetSize ${libogc} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libogcfat" "Size"
-  ReadINIStr $LIBOGC_FAT "$EXEDIR\devkitProUpdate.ini" "libogcfat" "File"
-  ReadINIStr $LIBOGC_FAT_VER "$EXEDIR\devkitProUpdate.ini" "libogcfat" "Version"
-  SectionSetSize ${libogcfat} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "ndsexamples" "Size"
-  ReadINIStr $NDSEXAMPLES "$EXEDIR\devkitProUpdate.ini" "ndsexamples" "File"
-  ReadINIStr $NDSEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "ndsexamples" "Version"
-  SectionSetSize ${ndsexamples} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "3dsexamples" "Size"
-  ReadINIStr $CTREXAMPLES "$EXEDIR\devkitProUpdate.ini" "3dsexamples" "File"
-  ReadINIStr $CTREXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "3dsexamples" "Version"
-  SectionSetSize ${Sec3dsexamples} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "defaultarm7" "Size"
-  ReadINIStr $DEFAULT_ARM7 "$EXEDIR\devkitProUpdate.ini" "defaultarm7" "File"
-  ReadINIStr $DEFAULT_ARM7_VER "$EXEDIR\devkitProUpdate.ini" "defaultarm7" "Version"
-  SectionSetSize ${defaultarm7} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "filesystem" "Size"
-  ReadINIStr $FILESYSTEM "$EXEDIR\devkitProUpdate.ini" "filesystem" "File"
-  ReadINIStr $FILESYSTEM_VER "$EXEDIR\devkitProUpdate.ini" "filesystem" "Version"
-  SectionSetSize ${filesystem} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "gbaexamples" "Size"
-  ReadINIStr $GBAEXAMPLES "$EXEDIR\devkitProUpdate.ini" "gbaexamples" "File"
-  ReadINIStr $GBAEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "gbaexamples" "Version"
-  SectionSetSize ${gbaexamples} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "gp32examples" "Size"
-  ReadINIStr $GP32EXAMPLES "$EXEDIR\devkitProUpdate.ini" "gp32examples" "File"
-  ReadINIStr $GP32EXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "gp32examples" "Version"
-  SectionSetSize ${gp32examples} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitPPC" "Size"
-  ReadINIStr $DEVKITPPC "$EXEDIR\devkitProUpdate.ini" "devkitPPC" "File"
-  ReadINIStr $DEVKITPPC_VER "$EXEDIR\devkitProUpdate.ini" "devkitPPC" "Version"
-  SectionSetSize ${devkitPPC} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "cubeexamples" "Size"
-  ReadINIStr $CUBEEXAMPLES "$EXEDIR\devkitProUpdate.ini" "cubeexamples" "File"
-  ReadINIStr $CUBEEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "cubeexamples" "Version"
-  SectionSetSize ${cubeexamples} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "wiiexamples" "Size"
-  ReadINIStr $WIIEXAMPLES "$EXEDIR\devkitProUpdate.ini" "wiiexamples" "File"
-  ReadINIStr $WIIEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "wiiexamples" "Version"
-  SectionSetSize ${wiiexamples} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "devkitA64" "Size"
-  ReadINIStr $DEVKITA64 "$EXEDIR\devkitProUpdate.ini" "devkitA64" "File"
-  ReadINIStr $DEVKITA64_VER "$EXEDIR\devkitProUpdate.ini" "devkitA64" "Version"
-  SectionSetSize ${devkitA64} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "libnx" "Size"
-  ReadINIStr $LIBNX "$EXEDIR\devkitProUpdate.ini" "libnx" "File"
-  ReadINIStr $LIBNX_VER "$EXEDIR\devkitProUpdate.ini" "libnx" "Version"
-  SectionSetSize ${libnx} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "switchexamples" "Size"
-  ReadINIStr $SWITCHEXAMPLES "$EXEDIR\devkitProUpdate.ini" "switchexamples" "File"
-  ReadINIStr $SWITCHEXAMPLES_VER "$EXEDIR\devkitProUpdate.ini" "switchexamples" "Version"
-  SectionSetSize ${switchexamples} $R0
-
-  ReadINIStr $R0 "$EXEDIR\devkitProUpdate.ini" "pnotepad" "Size"
-  ReadINIStr $PNOTEPAD "$EXEDIR\devkitProUpdate.ini" "pnotepad" "File"
-  ReadINIStr $PNOTEPAD_VER "$EXEDIR\devkitProUpdate.ini" "pnotepad" "Version"
-  SectionSetSize ${Pnotepad} $R0
 
   !insertmacro INSTALLOPTIONS_EXTRACT_AS "Dialogs\PickMirror.ini" "PickMirror.ini"
 
@@ -1062,167 +459,30 @@ installing:
 
   StrCpy $Updates 0
 
-  !insertmacro SetSectionFlag SecdevkitARM SF_EXPAND
-  !insertmacro SetSectionFlag SecdevkitARM SF_TOGGLED
-
-  push "devkitARM"
-  push $DEVKITARM_VER
-  push ${SecdkARM}
-  call checkVersion
-
-  push "libmirko"
-  push $LIBMIRKO_VER
-  push ${Seclibmirko}
-  call checkVersion
-
-  push "libgba"
-  push $LIBGBA_VER
-  push ${Seclibgba}
-  call checkVersion
-
-  push "libgbafat"
-  push $LIBGBA_FAT_VER
-  push ${Seclibgbafat}
-  call checkVersion
-
-  push "maxmodgba"
-  push $MAXMODGBA_VER
-  push ${maxmodgba}
-  call checkVersion
-
-  push "libnds"
-  push $LIBNDS_VER
-  push ${Seclibnds}
-  call checkVersion
-
-  push "maxmodds"
-  push $MAXMODDS_VER
-  push ${maxmodds}
-  call checkVersion
-
-  push "dswifi"
-  push $DSWIFI_VER
-  push ${Secdswifi}
-  call checkVersion
-
-  push "libndsfat"
-  push $LIBNDS_FAT_VER
-  push ${Seclibndsfat}
-  call checkVersion
-
-  push "ndsexamples"
-  push $NDSEXAMPLES_VER
-  push ${ndsexamples}
-  call checkVersion
-
-  push "defaultarm7"
-  push $DEFAULT_ARM7_VER
-  push ${defaultarm7}
-  call checkVersion
-
-  push "filesystem"
-  push $FILESYSTEM_VER
-  push ${filesystem}
-  call checkVersion
-
-  push "gbaexamples"
-  push $GBAEXAMPLES_VER
-  push ${gbaexamples}
-  call checkVersion
-
-  push "gp32examples"
-  push $GP32EXAMPLES_VER
-  push ${gp32examples}
-  call checkVersion
-
-  push "libctru"
-  push $LIBCTRU_VER
-  push ${Seclibctru}
-  call checkVersion
-
-  push "citro3d"
-  push $CITRO3D_VER
-  push ${Seccitro3d}
-  call checkVersion
-
-  push "3dsexamples"
-  push $CTREXAMPLES_VER
-  push ${Sec3dsexamples}
-  call checkVersion
-
-  IntCmp $Updates 0 +1 dkARMupdates dkARMupdates
-
-  SectionSetText ${SecdevkitARM} ""
-
-dkARMupdates:
-
   push "msys2"
   push $MSYS2_VER
   push ${SecMsys}
   call checkVersion
 
-  StrCpy $R2 $Updates
-  ReadINIStr $0 "$INSTDIR\installed.ini" "devkitPPC" "Version"
+  push "GBADev"
+  push ${SecGBADev}
+  call checkEnabled
 
-  push "devkitPPC"
-  push $DEVKITPPC_VER
-  push ${devkitPPC}
-  call checkVersion
+  push "GP32Dev"
+  push ${SecGP32Dev}
+  call checkEnabled
 
-  push "libogc"
-  push $LIBOGC_VER
-  push ${libogc}
-  call checkVersion
+  push "NDSDev"
+  push ${SecNDSDev}
+  call checkEnabled
 
-  push "libogcfat"
-  push $LIBOGC_FAT_VER
-  push ${libogcfat}
-  call checkVersion
+  push "3DSDev"
+  push ${Sec3DSDev}
+  call checkEnabled
 
-  push "cubeexamples"
-  push $CUBEEXAMPLES_VER
-  push ${cubeexamples}
-  call checkVersion
-
-  push "wiiexamples"
-  push $WIIEXAMPLES_VER
-  push ${wiiexamples}
-  call checkVersion
-
-  IntOp $R1 $Updates - $R2
-  IntCmp $R1 0 +1 dkPPCupdates dkPPCupdates
-
-  SectionSetText ${grpdevkitPPC} ""
-
-dkPPCupdates:
-  StrCpy $R2 $Updates
-
-  push "devkitA64"
-  push $DEVKITA64_VER
-  push ${devkitA64}
-  call checkVersion
-
-  push "libnx"
-  push $LIBNX_VER
-  push ${libnx}
-  call checkVersion
-
-  push "switchexamples"
-  push $SWITCHEXAMPLES_VER
-  push ${switchexamples}
-  call checkVersion
-
-  IntOp $R1 $Updates - $R2
-  IntCmp $R1 0 +1 dkA64updates dkA64updates
-
-  SectionSetText ${grpdevkitA64} ""
-
-dkA64updates:
-
-  push "pnotepad"
-  push $PNOTEPAD_VER
-  push ${Pnotepad}
-  call checkVersion
+  push "SwitchDev"
+  push ${SecSwitchDev}
+  call checkEnabled
 
 first_install:
 
@@ -1287,6 +547,65 @@ done:
 
 FunctionEnd
 
+var Enabled
+;-----------------------------------------------------------------------------------------------------------------------
+Function checkEnabled
+;-----------------------------------------------------------------------------------------------------------------------
+  pop $PackageSection
+  pop $key
+
+  ReadINIStr $Enabled "$INSTDIR\installed.ini" "$key" "Enabled"
+
+  ; check for blank enabled key
+  StrLen $0 $Enabled
+  IntCmp $0 0 +1 gotinstalled gotinstalled
+
+  StrCpy $Enabled  1
+  WriteINIStr $INSTDIR\installed.ini "$key" "Enabled" "1"
+
+gotinstalled:
+
+  SectionGetFlags $PackageSection $PackageFlags
+
+  IntOp $R1 ${SF_RO} ~
+  IntOp $PackageFlags $PackageFlags & $R1
+  IntOp $PackageFlags $PackageFlags & ${SECTION_OFF}
+
+  IntCmp $Enabled 1 selectit noselectit noselectit
+
+selectit:
+  IntOp $PackageFlags $PackageFlags | ${SF_SELECTED}
+
+noselectit:
+
+  SectionSetFlags $PackageSection $PackageFlags
+
+FunctionEnd
+
+var group
+
+;-----------------------------------------------------------------------------------------------------------------------
+Function updateGroup
+;-----------------------------------------------------------------------------------------------------------------------
+  pop $PackageSection
+  pop $group
+  pop $key
+
+  StrCpy $Enabled  0
+
+  SectionGetFlags $PackageSection $0
+  IntOp $0 $0 & ${SF_SELECTED}
+  IntCmp $0 ${SF_SELECTED} +1 skipUpdate
+
+  StrCpy $Enabled  1
+
+  ExecWait '"$INSTDIR\msys2\usr\bin\pacman.exe" -S $group --noconfirm --needed'
+
+skipUpdate:
+  WriteINIStr $INSTDIR\installed.ini "$key" "Enabled" "$Enabled"
+
+FunctionEnd
+
 ;-----------------------------------------------------------------------------------------------------------------------
 Function .onVerifyInstDir
 ;-----------------------------------------------------------------------------------------------------------------------
@@ -1344,21 +663,6 @@ FunctionEnd
 
 
 ;-----------------------------------------------------------------------------------------------------------------------
-Function AbortComponents
-;-----------------------------------------------------------------------------------------------------------------------
-
-  IntCmp $Updating 1 +1 ShowPage ShowPage
-
-  IntCmp $Updates 0 +1 Showpage Showpage
-
-  StrCpy $FINISH_TEXT "${PRODUCT_NAME} found no updates to install."
-  Abort
-
-ShowPage:
-
-FunctionEnd
-
-;-----------------------------------------------------------------------------------------------------------------------
 Function AbortPage
 ;-----------------------------------------------------------------------------------------------------------------------
 
@@ -1413,117 +717,7 @@ SkipThisDL:
 FunctionEnd
 
 
-var LIB
-var FOLDER
-
-
-
-;-----------------------------------------------------------------------------------------------------------------------
-Function ExtractToolChain
-;-----------------------------------------------------------------------------------------------------------------------
-  pop $R5  ; version
-  pop $R4  ; section name
-  pop $R2  ; 7zip
-  pop $R1  ; env variable
-  pop $R0  ; section flags
-
-  SectionGetFlags $R0 $0
-  IntOp $0 $0 & ${SF_SELECTED}
-  IntCmp $0 ${SF_SELECTED} +1 SkipExtract
-
-  RMDir /r "$INSTDIR\$R4"
-
-  SetOutPath $INSTDIR
-
-  Nsis7z::ExtractWithDetails "$EXEDIR\$R2" "Installing package %s..."
-
-  StrCmp $R1 "" NoEnvVar 0
-
-  WriteRegStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" $R1 "/opt/devkitpro/$R4"
-  SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
-
-NoEnvVar:
-
-  push $R2
-  call RemoveFile
-
-  WriteINIStr $INSTDIR\installed.ini $R4 Version $R5
-
-SkipExtract:
-
-FunctionEnd
-
-;-----------------------------------------------------------------------------------------------------------------------
-Function ExtractExamples
-;-----------------------------------------------------------------------------------------------------------------------
-  pop $R3  ; version
-  pop $R2  ; section name
-  pop $LIB ; filename
-  pop $FOLDER ; extract to
-  pop $R0  ; section flags
-
-  SectionGetFlags $R0 $0
-  IntOp $0 $0 & ${SF_SELECTED}
-  IntCmp $0 ${SF_SELECTED} +1 SkipExtract
-
-  RMDir /r "$INSTDIR\$FOLDER"
-  CreateDirectory "$INSTDIR\$FOLDER"
-  untgz::extract -d "$INSTDIR\$FOLDER" -zbz2 "$EXEDIR\$LIB"
-
-  StrCmp $R0 "success" succeeded
-
-    SetDetailsView show
-    DetailPrint "failed to extract $LIB: $R0"
-
-  abort
-  goto SkipExtract
-succeeded:
-
-  WriteINIStr $INSTDIR\installed.ini $R2 Version $R3
-  push $LIB
-  call RemoveFile
-
-SkipExtract:
-
-FunctionEnd
-
-
-
-;-----------------------------------------------------------------------------------------------------------------------
-Function ExtractLib
-;-----------------------------------------------------------------------------------------------------------------------
-  pop $R3  ; version
-  pop $R2  ; section name
-  pop $LIB ; filename
-  pop $FOLDER ; extract to
-  pop $R0  ; section flags
-
-  SectionGetFlags $R0 $0
-  IntOp $0 $0 & ${SF_SELECTED}
-  IntCmp $0 ${SF_SELECTED} +1 SkipExtract
-
-  CreateDirectory "$INSTDIR\$FOLDER"
-  untgz::extract -d "$INSTDIR\$FOLDER" -zbz2 "$EXEDIR\$LIB"
-
-  StrCmp $R0 "success" succeeded
-
-    SetDetailsView show
-    DetailPrint "failed to extract $LIB: $R0"
-
-  abort
-  goto SkipExtract
-succeeded:
-
-  WriteINIStr $INSTDIR\installed.ini $R2 Version $R3
-  push $LIB
-  call RemoveFile
-
-SkipExtract:
-
-FunctionEnd
-
 var keepfiles
-
 ;-----------------------------------------------------------------------------------------------------------------------
 Function KeepFilesPage
 ;-----------------------------------------------------------------------------------------------------------------------
@@ -1657,9 +851,6 @@ Function FinishPage
   Pop $R0
   SetCtlColors $R0 "" "${MUI_BGCOLOR}"
 
-  IntCmp $Updating 1 +1 ShowPage ShowPage
-  IntCmp $Updates 0 Showpage +1 +1
-
   ${NSD_CreateLabel} 140u 120u 162u 12u "Help keep devkitPro toolchains free"
   Pop $R0
   SetCtlColors $R0 "000080" "FFFFFF"
@@ -1692,9 +883,6 @@ Function FinishPage
   SendMessage $R0 ${WM_SETFONT} $R1 1
   ${NSD_OnClick} $R0 WhyDonate
 
-Showpage:
-
   nsDialogs::Show
 
 FunctionEnd
-
