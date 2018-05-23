@@ -15,13 +15,13 @@ RequestExecutionLevel admin ;Require admin rights on NT6+ (When UAC is turned on
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "3.0.0"
+!define PRODUCT_VERSION "3.0.1"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "53"
+!define BUILD "54"
 
 SetCompressor /SOLID lzma
 
@@ -32,6 +32,8 @@ SetCompressor /SOLID lzma
 !include "InstallOptions.nsh"
 !include "ReplaceInFile.nsh"
 !include "NTProfiles.nsh"
+!include LogicLib.nsh
+!include x64.nsh
 
 ;${StrTok}
 ${StrRep}
@@ -182,6 +184,10 @@ Section "NDS Development" SecNDSDev
 SectionEnd
 Section "3DS Development" Sec3DSDev
 SectionEnd
+Section "Gamecube Development" SecGameCubeDev
+SectionEnd
+Section "Wii Development" SecWiiDev
+SectionEnd
 
 Section -installComponents
 
@@ -271,6 +277,16 @@ SkipMsys:
   push "3DSDev"
   push "3ds-dev"
   push ${Sec3DSDev}
+  call updateGroup
+
+  push "GameCubeDev"
+  push "gamecube-dev"
+  push ${SecGameCubeDev}
+  call updateGroup
+
+  push "WiiDev"
+  push "wii-dev"
+  push ${SecWiiDev}
   call updateGroup
 
   push "SwitchDev"
@@ -374,6 +390,14 @@ var mirrorINI
 ;-----------------------------------------------------------------------------------------------------------------------
 Function .onInit
 ;-----------------------------------------------------------------------------------------------------------------------
+
+${If} ${RunningX64}
+${Else}
+  MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Sorry, this installer only supports 64 bit."
+  Quit
+${EndIf}  
+
+
   ; test existing ini file version
   ; if lower than build then use built in ini
   ifFileExists $EXEDIR\devkitProUpdate.ini +1 extractINI
@@ -478,6 +502,14 @@ installing:
 
   push "3DSDev"
   push ${Sec3DSDev}
+  call checkEnabled
+
+  push "SwitchDev"
+  push ${SecSwitchDev}
+  call checkEnabled
+
+  push "SwitchDev"
+  push ${SecSwitchDev}
   call checkEnabled
 
   push "SwitchDev"
