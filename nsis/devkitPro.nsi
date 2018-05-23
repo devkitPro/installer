@@ -15,13 +15,13 @@ RequestExecutionLevel admin ;Require admin rights on NT6+ (When UAC is turned on
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "3.0.1"
+!define PRODUCT_VERSION "3.0.2"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "54"
+!define BUILD "55"
 
 SetCompressor /SOLID lzma
 
@@ -382,6 +382,8 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${SecGP32Dev} "tools for GP32 development"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecNDSDev} "tools for NDS development"
   !insertmacro MUI_DESCRIPTION_TEXT ${Sec3DSDev} "tools for 3DS development"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecGameCubeDev} "tools for Gamecube development"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecWiiDev} "tools for Wii development"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 var keepINI
@@ -504,12 +506,12 @@ installing:
   push ${Sec3DSDev}
   call checkEnabled
 
-  push "SwitchDev"
-  push ${SecSwitchDev}
+  push "GameCubeDev"
+  push ${SecGameCubeDev}
   call checkEnabled
 
-  push "SwitchDev"
-  push ${SecSwitchDev}
+  push "WiiDev"
+  push ${SecWiiDev}
   call checkEnabled
 
   push "SwitchDev"
