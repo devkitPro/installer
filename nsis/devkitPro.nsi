@@ -15,13 +15,13 @@ RequestExecutionLevel admin ;Require admin rights on NT6+ (When UAC is turned on
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "devkitProUpdater"
-!define PRODUCT_VERSION "3.0.2"
+!define PRODUCT_VERSION "3.0.3"
 !define PRODUCT_PUBLISHER "devkitPro"
 !define PRODUCT_WEB_SITE "http://www.devkitpro.org"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
-!define BUILD "55"
+!define BUILD "56"
 
 SetCompressor /SOLID lzma
 
@@ -358,9 +358,17 @@ Section Uninstall
   ReadRegStr $1 HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "PATH"
   ${UnStrRep} $1 $1 "$INSTDIR\msys\bin;" ""
   ${UnStrRep} $1 $1 "$INSTDIR\msys2\usr\bin;" ""
+
+  StrCmp $1 "" 0 ResetPath
+
+  MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Trying to set path to blank string!$\nPlease reset path manually"
+  goto BlankedPath
+
+ResetPath:
   WriteRegExpandStr HKLM "System\CurrentControlSet\Control\Session Manager\Environment" "PATH" $1
   SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 
+BlankedPath:
   DeleteRegKey HKCR ".pnproj"
   DeleteRegKey HKCR "PN2.pnproj.1\shell\open\command"
   DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
@@ -670,7 +678,7 @@ FunctionEnd
 
 
 ;-----------------------------------------------------------------------------------------------------------------------
-; Check for a newer version of the installer, download and ask the user if he wants to run it
+; Check for a newer version of the installer, download and ask the user if they want to run it
 ;-----------------------------------------------------------------------------------------------------------------------
 Function UpgradedevkitProUpdate
 ;-----------------------------------------------------------------------------------------------------------------------
