@@ -670,7 +670,7 @@ Function un.onInit
   MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are you sure you want to completely remove all devkitPro packages?" IDYES +2
   Abort
 
-  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are absolutely sure you want to do this?$\r$\nThis will remove the whole devkitPro folder and it's contents." IDYES +2
+  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are you absolutely sure you want to do this?$\r$\nThis will remove the whole devkitPro folder and it's contents." IDYES +2
   Abort
 
 FunctionEnd
@@ -863,7 +863,7 @@ FunctionEnd
 ;-----------------------------------------------------------------------------------------------------------------------
 Function WhyDonate
 ;-----------------------------------------------------------------------------------------------------------------------
-  ExecShell "open" "http://devkitpro.org/support-devkitpro/"
+  ExecShell "open" "https://devkitpro.org/support-devkitpro/"
 FunctionEnd
 
 ;-----------------------------------------------------------------------------------------------------------------------
