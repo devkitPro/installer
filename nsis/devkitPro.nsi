@@ -1,7 +1,6 @@
 RequestExecutionLevel admin ;Require admin rights on NT6+ (When UAC is turned on)
 
 ; plugins required
-; untgz          - http://nsis.sourceforge.net/UnTGZ_plug-in
 ; inetc          - http://nsis.sourceforge.net/Inetc_plug-in
 ;                  http://forums.winamp.com/showthread.php?s=&threadid=198596&perpage=40&highlight=&pagenumber=4
 ;                  http://forums.winamp.com/attachment.php?s=&postid=1831346
