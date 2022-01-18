@@ -184,7 +184,7 @@ Section "NDS Development" SecNDSDev
 SectionEnd
 Section "3DS Development" Sec3DSDev
 SectionEnd
-Section "Gamecube Development" SecGameCubeDev
+Section "GameCube Development" SecGameCubeDev
 SectionEnd
 Section "Wii Development" SecWiiDev
 SectionEnd
@@ -390,7 +390,7 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${SecGP32Dev} "tools for GP32 development"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecNDSDev} "tools for NDS development"
   !insertmacro MUI_DESCRIPTION_TEXT ${Sec3DSDev} "tools for 3DS development"
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecGameCubeDev} "tools for Gamecube development"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecGameCubeDev} "tools for GameCube development"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecWiiDev} "tools for Wii development"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
@@ -670,7 +670,7 @@ Function un.onInit
   MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are you sure you want to completely remove all devkitPro packages?" IDYES +2
   Abort
 
-  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are you absolutely sure you want to do this?$\r$\nThis will remove the whole devkitPro folder and it's contents." IDYES +2
+  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Are you absolutely sure you want to do this?$\r$\nThis will remove the whole devkitPro folder and its contents." IDYES +2
   Abort
 
 FunctionEnd
